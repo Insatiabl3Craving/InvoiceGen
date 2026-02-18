@@ -25,6 +25,7 @@ namespace InvoiceGenerator.Views
         {
             InitializeComponent();
             LoadClients();
+            _ = SetNextInvoiceNumberAsync();
         }
 
         private async void LoadClients()
@@ -38,6 +39,18 @@ namespace InvoiceGenerator.Views
             catch (Exception ex)
             {
                 MessageBox.Show($"Error loading clients: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async System.Threading.Tasks.Task SetNextInvoiceNumberAsync()
+        {
+            try
+            {
+                InvoiceNumberTB.Text = await _invoiceService.GetNextInvoiceNumberAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error generating invoice number: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -125,8 +138,12 @@ namespace InvoiceGenerator.Views
 
             if (string.IsNullOrWhiteSpace(InvoiceNumberTB.Text))
             {
-                MessageBox.Show("Please enter an invoice number.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
+                await SetNextInvoiceNumberAsync();
+                if (string.IsNullOrWhiteSpace(InvoiceNumberTB.Text))
+                {
+                    MessageBox.Show("Please enter an invoice number.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
             }
 
             if (!DateFromDP.SelectedDate.HasValue || !DateToDP.SelectedDate.HasValue)
@@ -169,11 +186,20 @@ namespace InvoiceGenerator.Views
                 var replacements = new Dictionary<string, string>
                 {
                     { "INVOICE_NUMBER", InvoiceNumberTB.Text },
+                    { "INVOICE_NO", InvoiceNumberTB.Text },
                     { "CLIENT_NAME", _selectedClient.DisplayName },
+                    { "CUSTOMER_NAME", _selectedClient.DisplayName },
                     { "CLIENT_EMAIL", _selectedClient.ContactEmail },
+                    { "EMAIL", _selectedClient.ContactEmail },
                     { "CLIENT_ADDRESS", _selectedClient.BillingAddress },
+                    { "ADDRESS", _selectedClient.BillingAddress },
+                    { "CUSTOMER_STREET", _selectedClient.StreetAddress ?? string.Empty },
+                    { "CUSTOMER_CITY", _selectedClient.City ?? string.Empty },
+                    { "CUSTOMER_POSTCODE", _selectedClient.Postcode ?? string.Empty },
+                    { "CUSTOMER_ADDRESS", _selectedClient.BillingAddress },
                     { "DATE_FROM", DateFromDP.SelectedDate.Value.ToString("yyyy-MM-dd") },
                     { "DATE_TO", DateToDP.SelectedDate.Value.ToString("yyyy-MM-dd") },
+                    { "INVOICE_PERIOD", $"{DateFromDP.SelectedDate.Value:dd/MM/yyyy} - {DateToDP.SelectedDate.Value:dd/MM/yyyy}" },
                     { "DATE_GENERATED", DateTime.Now.ToString("yyyy-MM-dd") },
                     { "TOTAL_AMOUNT", _currentLineItems.Sum(i => i.Amount).ToString("F2") }
                 };
@@ -215,6 +241,7 @@ namespace InvoiceGenerator.Views
 
                 MessageBox.Show($"Invoice generated successfully!\n\nSaved to: {settings.InvoicesFolderPath}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 ClearForm();
+                await SetNextInvoiceNumberAsync();
             }
             catch (Exception ex)
             {
@@ -224,7 +251,6 @@ namespace InvoiceGenerator.Views
 
         private void ClearForm()
         {
-            InvoiceNumberTB.Clear();
             DateFromDP.SelectedDate = null;
             DateToDP.SelectedDate = null;
             _currentLineItems.Clear();

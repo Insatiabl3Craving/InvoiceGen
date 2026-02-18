@@ -18,6 +18,7 @@ This guide explains how to set up your Word template for use with Invoice Genera
 4. **Add Invoice Details Section** with placeholders:
    ```
    Invoice Number: {{INVOICE_NUMBER}}
+   Invoice Period: {{INVOICE_PERIOD}}
    Date From: {{DATE_FROM}}
    Date To: {{DATE_TO}}
    ```
@@ -25,9 +26,10 @@ This guide explains how to set up your Word template for use with Invoice Genera
 5. **Add Client Information Section** with placeholders:
    ```
    BILL TO:
-   {{CLIENT_NAME}}
-   {{ADDRESS}}
-   {{EMAIL}}
+   {{CUSTOMER_NAME}}
+   {{CUSTOMER_STREET}}
+   {{CUSTOMER_CITY}}, {{CUSTOMER_POSTCODE}}
+   {{CLIENT_EMAIL}}
    ```
 
 6. **Create Line Items Table**:
@@ -61,12 +63,21 @@ When creating your template, use these placeholders:
 
 | Placeholder | Description |
 |-------------|-------------|
-| {{CLIENT_NAME}} | Client display name |
-| {{ADDRESS}} | Client billing address |
-| {{EMAIL}} | Client email address |
+| {{CLIENT_NAME}} | Client display name (legacy placeholder) |
+| {{CLIENT_ADDRESS}} | Client billing address (legacy placeholder) |
+| {{ADDRESS}} | Client billing address (legacy placeholder) |
+| {{CLIENT_EMAIL}} | Client email address |
+| {{EMAIL}} | Client email address (legacy placeholder) |
+| {{CUSTOMER_NAME}} | Customer name |
+| {{CUSTOMER_STREET}} | Customer street address |
+| {{CUSTOMER_CITY}} | Customer city |
+| {{CUSTOMER_POSTCODE}} | Customer postcode |
+| {{CUSTOMER_ADDRESS}} | Customer address line (legacy alias for billing address) |
 | {{INVOICE_NUMBER}} | Invoice number (e.g., INV-0042) |
-| {{DATE_FROM}} | Invoice period start date |
-| {{DATE_TO}} | Invoice period end date |
+| {{INVOICE_NO}} | Invoice number (alias) |
+| {{INVOICE_PERIOD}} | Invoice period in DD/MM/YYYY - DD/MM/YYYY |
+| {{DATE_FROM}} | Invoice period start date (YYYY-MM-DD) |
+| {{DATE_TO}} | Invoice period end date (YYYY-MM-DD) |
 | {{LINE_DESCRIPTION}} | Line item description |
 | {{LINE_QUANTITY}} | Line item quantity |
 | {{LINE_RATE}} | Line item unit rate |
@@ -100,13 +111,14 @@ Your Company Address | Phone | Email
 INVOICE
 
 Invoice #: {{INVOICE_NUMBER}}
-Period: {{DATE_FROM}} to {{DATE_TO}}
+Period: {{INVOICE_PERIOD}}
 
 ─────────────────────────────────────────
 BILL TO:
-{{CLIENT_NAME}}
-{{ADDRESS}}
-{{EMAIL}}
+{{CUSTOMER_NAME}}
+{{CUSTOMER_STREET}}
+{{CUSTOMER_CITY}}, {{CUSTOMER_POSTCODE}}
+{{CLIENT_EMAIL}}
 
 ─────────────────────────────────────────
 LINE ITEMS:

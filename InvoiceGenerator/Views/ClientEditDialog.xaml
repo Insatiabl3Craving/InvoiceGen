@@ -29,8 +29,26 @@
                 <ColumnDefinition Width="150"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="Billing Address:" VerticalAlignment="Top" Margin="0,5,0,0"/>
-            <TextBox Name="AddressTB" Grid.Column="1" AcceptsReturn="True" TextWrapping="Wrap" Height="80"/>
+            <TextBlock Text="Street:" VerticalAlignment="Center"/>
+            <TextBox Name="StreetTB" Grid.Column="1" Padding="10,6" Height="38" VerticalContentAlignment="Center"/>
+        </Grid>
+
+        <Grid Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="150"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="City:" VerticalAlignment="Center"/>
+            <TextBox Name="CityTB" Grid.Column="1" Padding="10,6" Height="38" VerticalContentAlignment="Center"/>
+        </Grid>
+
+        <Grid Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="150"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Postcode:" VerticalAlignment="Center"/>
+            <TextBox Name="PostcodeTB" Grid.Column="1" Padding="10,6" Height="38" VerticalContentAlignment="Center"/>
         </Grid>
 
         <Grid Margin="0,0,0,10">

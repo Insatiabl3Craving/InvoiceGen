@@ -40,6 +40,7 @@ namespace InvoiceGenerator.Services
             {
                 await context.Database.EnsureCreatedAsync();
                 await EnsureAppSettingsAuthColumnsAsync(context);
+                await EnsureClientAddressColumnsAsync(context);
             }
         }
 
@@ -81,6 +82,63 @@ namespace InvoiceGenerator.Services
                 if (!existingColumns.Contains("AppPasswordCreatedUtc"))
                 {
                     alterStatements.Add("ALTER TABLE AppSettings ADD COLUMN AppPasswordCreatedUtc TEXT NULL;");
+                }
+
+                foreach (var sql in alterStatements)
+                {
+                    using var alterCommand = connection.CreateCommand();
+                    alterCommand.CommandText = sql;
+                    await alterCommand.ExecuteNonQueryAsync();
+                }
+
+                using var fixNullsCommand = connection.CreateCommand();
+                fixNullsCommand.CommandText =
+                    "UPDATE Clients " +
+                    "SET StreetAddress = COALESCE(StreetAddress, ''), " +
+                    "City = COALESCE(City, ''), " +
+                    "Postcode = COALESCE(Postcode, '') " +
+                    "WHERE StreetAddress IS NULL OR City IS NULL OR Postcode IS NULL;";
+                await fixNullsCommand.ExecuteNonQueryAsync();
+            }
+            finally
+            {
+                await connection.CloseAsync();
+            }
+        }
+
+        private static async Task EnsureClientAddressColumnsAsync(InvoiceGeneratorDbContext context)
+        {
+            var connection = context.Database.GetDbConnection();
+            await connection.OpenAsync();
+
+            try
+            {
+                var existingColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "PRAGMA table_info(Clients);";
+                    using var reader = await command.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
+                    {
+                        existingColumns.Add(reader.GetString(1));
+                    }
+                }
+
+                var alterStatements = new List<string>();
+
+                if (!existingColumns.Contains("StreetAddress"))
+                {
+                    alterStatements.Add("ALTER TABLE Clients ADD COLUMN StreetAddress TEXT NULL;");
+                }
+
+                if (!existingColumns.Contains("City"))
+                {
+                    alterStatements.Add("ALTER TABLE Clients ADD COLUMN City TEXT NULL;");
+                }
+
+                if (!existingColumns.Contains("Postcode"))
+                {
+                    alterStatements.Add("ALTER TABLE Clients ADD COLUMN Postcode TEXT NULL;");
                 }
 
                 foreach (var sql in alterStatements)

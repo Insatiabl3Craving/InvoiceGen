@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Windows;
 using InvoiceGenerator.Models;
 using InvoiceGenerator.Services;
@@ -26,8 +27,35 @@ namespace InvoiceGenerator.Views
         {
             DisplayNameTB.Text = client.DisplayName;
             EmailTB.Text = client.ContactEmail;
-            AddressTB.Text = client.BillingAddress;
+            StreetTB.Text = client.StreetAddress ?? string.Empty;
+            CityTB.Text = client.City ?? string.Empty;
+            PostcodeTB.Text = client.Postcode ?? string.Empty;
             AdditionalTB.Text = client.AdditionalInfo ?? "";
+
+            if (string.IsNullOrWhiteSpace(StreetTB.Text)
+                && string.IsNullOrWhiteSpace(CityTB.Text)
+                && string.IsNullOrWhiteSpace(PostcodeTB.Text)
+                && !string.IsNullOrWhiteSpace(client.BillingAddress))
+            {
+                var parts = client.BillingAddress
+                    .Replace("\r\n", "\n")
+                    .Split(new[] { '\n', ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+                if (parts.Length > 0)
+                {
+                    StreetTB.Text = parts[0].Trim();
+                }
+
+                if (parts.Length > 1)
+                {
+                    CityTB.Text = parts[1].Trim();
+                }
+
+                if (parts.Length > 2)
+                {
+                    PostcodeTB.Text = parts[2].Trim();
+                }
+            }
         }
 
         private async void SaveBtn_Click(object sender, RoutedEventArgs e)
@@ -44,6 +72,14 @@ namespace InvoiceGenerator.Views
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(StreetTB.Text)
+                || string.IsNullOrWhiteSpace(CityTB.Text)
+                || string.IsNullOrWhiteSpace(PostcodeTB.Text))
+            {
+                MessageBox.Show("Street, City, and Postcode are required.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             try
             {
                 if (_currentClient == null)
@@ -53,7 +89,10 @@ namespace InvoiceGenerator.Views
                     {
                         DisplayName = DisplayNameTB.Text,
                         ContactEmail = EmailTB.Text,
-                        BillingAddress = AddressTB.Text,
+                        StreetAddress = StreetTB.Text.Trim(),
+                        City = CityTB.Text.Trim(),
+                        Postcode = PostcodeTB.Text.Trim(),
+                        BillingAddress = BuildBillingAddress(StreetTB.Text, CityTB.Text, PostcodeTB.Text),
                         AdditionalInfo = AdditionalTB.Text
                     };
                     await _clientService.AddClientAsync(newClient);
@@ -63,7 +102,10 @@ namespace InvoiceGenerator.Views
                     // Edit existing client
                     _currentClient.DisplayName = DisplayNameTB.Text;
                     _currentClient.ContactEmail = EmailTB.Text;
-                    _currentClient.BillingAddress = AddressTB.Text;
+                    _currentClient.StreetAddress = StreetTB.Text.Trim();
+                    _currentClient.City = CityTB.Text.Trim();
+                    _currentClient.Postcode = PostcodeTB.Text.Trim();
+                    _currentClient.BillingAddress = BuildBillingAddress(StreetTB.Text, CityTB.Text, PostcodeTB.Text);
                     _currentClient.AdditionalInfo = AdditionalTB.Text;
                     await _clientService.UpdateClientAsync(_currentClient);
                 }
@@ -81,6 +123,12 @@ namespace InvoiceGenerator.Views
         {
             DialogResult = false;
             Close();
+        }
+
+        private static string BuildBillingAddress(string street, string city, string postcode)
+        {
+            return string.Join(", ", new[] { street?.Trim(), city?.Trim(), postcode?.Trim() }
+                .Where(value => !string.IsNullOrWhiteSpace(value)));
         }
     }
 }
