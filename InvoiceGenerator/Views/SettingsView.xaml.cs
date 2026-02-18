@@ -12,6 +12,7 @@ namespace InvoiceGenerator.Views
     {
         private readonly SettingsService _settingsService = new();
         private readonly EmailService _emailService = new();
+        private readonly AuthService _authService = new();
 
         public SettingsView()
         {
@@ -201,6 +202,61 @@ namespace InvoiceGenerator.Views
             catch (Exception ex)
             {
                 MessageBox.Show($"Error saving settings: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async void ChangeAppPasswordBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var newPassword = NewAppPassword.Password;
+            var confirmPassword = ConfirmAppPassword.Password;
+
+            if (string.IsNullOrWhiteSpace(newPassword))
+            {
+                MessageBox.Show("New password is required.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (newPassword.Length < 8)
+            {
+                MessageBox.Show("New password must be at least 8 characters.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!string.Equals(newPassword, confirmPassword, StringComparison.Ordinal))
+            {
+                MessageBox.Show("New passwords do not match.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                var isPasswordSet = await _authService.IsPasswordSetAsync();
+                if (isPasswordSet)
+                {
+                    if (string.IsNullOrWhiteSpace(CurrentAppPassword.Password))
+                    {
+                        MessageBox.Show("Current password is required.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+
+                    var isValid = await _authService.VerifyPasswordAsync(CurrentAppPassword.Password);
+                    if (!isValid)
+                    {
+                        MessageBox.Show("Current password is incorrect.", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+                }
+
+                await _authService.SetPasswordAsync(newPassword);
+                CurrentAppPassword.Password = string.Empty;
+                NewAppPassword.Password = string.Empty;
+                ConfirmAppPassword.Password = string.Empty;
+
+                MessageBox.Show("App password updated successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error updating app password: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

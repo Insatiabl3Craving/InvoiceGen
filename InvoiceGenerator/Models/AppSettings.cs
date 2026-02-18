@@ -1,3 +1,5 @@
+using System;
+
 namespace InvoiceGenerator.Models
 {
     public class AppSettings
@@ -12,5 +14,9 @@ namespace InvoiceGenerator.Models
         public string EmailDefaultBody { get; set; } = "Please find attached your invoice.";
         public string CsvColumnMapping { get; set; } = "{}"; // JSON format for column mappings
         public bool EmailUseTls { get; set; } = true;
+        public string? AppPasswordHash { get; set; }
+        public string? AppPasswordSalt { get; set; }
+        public int AppPasswordIterations { get; set; }
+        public DateTime? AppPasswordCreatedUtc { get; set; }
     }
 }

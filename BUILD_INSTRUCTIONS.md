@@ -128,6 +128,20 @@ Technical Support,5,75.00
 - Delete: `C:\Users\<YourUsername>\AppData\Roaming\InvoiceGenerator\InvoiceGenerator.db`
 - Restart the application to regenerate the database
 
+### Forgot App Password
+- Close the app
+- **Keep data (recommended):** Use a SQLite tool (e.g., DB Browser for SQLite) and run:
+   ```
+   UPDATE AppSettings
+   SET AppPasswordHash = NULL,
+         AppPasswordSalt = NULL,
+         AppPasswordIterations = 0,
+         AppPasswordCreatedUtc = NULL
+   WHERE Id = 1;
+   ```
+   Then restart the application and set a new password
+- **Reset by deleting DB (data loss):** Delete `C:\Users\<YourUsername>\AppData\Roaming\InvoiceGenerator\InvoiceGenerator.db` and restart
+
 ## Creating an Installer
 
 To create a Windows installer, use Wix Toolset or NSIS. The compiled executable will be in:
