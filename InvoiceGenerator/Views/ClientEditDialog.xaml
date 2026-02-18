@@ -12,7 +12,7 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <TextBlock Text="Display Name:" VerticalAlignment="Center"/>
-            <TextBox Name="DisplayNameTB" Grid.Column="1" Padding="10" Height="35"/>
+            <TextBox Name="DisplayNameTB" Grid.Column="1" Padding="10,6" Height="38" VerticalContentAlignment="Center"/>
         </Grid>
 
         <Grid Margin="0,0,0,10">
@@ -21,7 +21,7 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <TextBlock Text="Contact Email:" VerticalAlignment="Center"/>
-            <TextBox Name="EmailTB" Grid.Column="1" Padding="10" Height="35"/>
+            <TextBox Name="EmailTB" Grid.Column="1" Padding="10,6" Height="38" VerticalContentAlignment="Center"/>
         </Grid>
 
         <Grid Margin="0,0,0,10">

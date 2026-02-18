@@ -31,7 +31,10 @@ namespace InvoiceGenerator.Views
 
         private void AddClientBtn_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new ClientEditDialog();
+            var dialog = new ClientEditDialog
+            {
+                Owner = Window.GetWindow(this)
+            };
             if (dialog.ShowDialog() == true)
             {
                 LoadClients();
@@ -42,7 +45,10 @@ namespace InvoiceGenerator.Views
         {
             if (ClientsDataGrid.SelectedItem is Client client)
             {
-                var dialog = new ClientEditDialog(client);
+                var dialog = new ClientEditDialog(client)
+                {
+                    Owner = Window.GetWindow(this)
+                };
                 if (dialog.ShowDialog() == true)
                 {
                     LoadClients();
@@ -81,7 +87,10 @@ namespace InvoiceGenerator.Views
         {
             if (ClientsDataGrid.SelectedItem is Client client)
             {
-                var dialog = new ClientEditDialog(client);
+                var dialog = new ClientEditDialog(client)
+                {
+                    Owner = Window.GetWindow(this)
+                };
                 if (dialog.ShowDialog() == true)
                 {
                     LoadClients();

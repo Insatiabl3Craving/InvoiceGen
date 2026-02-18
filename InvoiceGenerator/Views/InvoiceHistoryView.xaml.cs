@@ -107,7 +107,10 @@ namespace InvoiceGenerator.Views
         {
             if (InvoiceHistoryDataGrid.SelectedItem is Invoice invoice)
             {
-                var dialog = new EmailDialog(invoice);
+                var dialog = new EmailDialog(invoice)
+                {
+                    Owner = Window.GetWindow(this)
+                };
                 dialog.ShowDialog();
             }
             else

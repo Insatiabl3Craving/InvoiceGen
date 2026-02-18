@@ -18,7 +18,7 @@
                     <ColumnDefinition Width="100"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="Word Template Path:" VerticalAlignment="Center"/>
-                <TextBox Name="TemplatePath" Grid.Column="1" Height="35" Padding="10" Margin="10,0"/>
+                <TextBox Name="TemplatePath" Grid.Column="1" Height="38" Padding="10,6" Margin="10,0" VerticalContentAlignment="Center"/>
                 <Button Name="BrowseTemplateBtn" Grid.Column="2" Content="Browse" Click="BrowseTemplateBtn_Click"/>
             </Grid>
 
@@ -29,7 +29,7 @@
                     <ColumnDefinition Width="100"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="Invoices Folder:" VerticalAlignment="Center"/>
-                <TextBox Name="InvoicesFolderPath" Grid.Column="1" Height="35" Padding="10" Margin="10,0"/>
+                <TextBox Name="InvoicesFolderPath" Grid.Column="1" Height="38" Padding="10,6" Margin="10,0" VerticalContentAlignment="Center"/>
                 <Button Name="BrowseFolderBtn" Grid.Column="2" Content="Browse" Click="BrowseFolderBtn_Click"/>
             </Grid>
 
@@ -43,7 +43,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="SMTP Server:" VerticalAlignment="Center"/>
-                <TextBox Name="SmtpServer" Grid.Column="1" Height="35" Padding="10" Margin="10,0"/>
+                <TextBox Name="SmtpServer" Grid.Column="1" Height="38" Padding="10,6" Margin="10,0" VerticalContentAlignment="Center"/>
             </Grid>
 
             <Grid Margin="0,0,0,15">
@@ -52,7 +52,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="SMTP Port:" VerticalAlignment="Center"/>
-                <TextBox Name="SmtpPort" Grid.Column="1" Height="35" Padding="10" Margin="10,0" Text="587"/>
+                <TextBox Name="SmtpPort" Grid.Column="1" Height="38" Padding="10,6" Margin="10,0" Text="587" VerticalContentAlignment="Center"/>
             </Grid>
 
             <Grid Margin="0,0,0,15">
@@ -61,7 +61,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="From Email Address:" VerticalAlignment="Center"/>
-                <TextBox Name="FromEmail" Grid.Column="1" Height="35" Padding="10" Margin="10,0"/>
+                <TextBox Name="FromEmail" Grid.Column="1" Height="38" Padding="10,6" Margin="10,0" VerticalContentAlignment="Center"/>
             </Grid>
 
             <Grid Margin="0,0,0,15">
@@ -70,7 +70,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="Email Password:" VerticalAlignment="Center"/>
-                <PasswordBox Name="EmailPassword" Grid.Column="1" Height="35" Padding="10" Margin="10,0"/>
+                <PasswordBox Name="EmailPassword" Grid.Column="1" Height="38" Padding="10,6" Margin="10,0" VerticalContentAlignment="Center"/>
             </Grid>
 
             <CheckBox Name="UseTlsCheckBox" Content="Use TLS" Margin="0,0,0,15" IsChecked="True"/>
@@ -87,7 +87,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="Default Subject:" VerticalAlignment="Center"/>
-                <TextBox Name="DefaultSubject" Grid.Column="1" Height="35" Padding="10" Margin="10,0"/>
+                <TextBox Name="DefaultSubject" Grid.Column="1" Height="38" Padding="10,6" Margin="10,0" VerticalContentAlignment="Center"/>
             </Grid>
 
             <Grid Margin="0,0,0,15">
