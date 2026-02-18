@@ -107,6 +107,18 @@ namespace InvoiceGenerator.Views
         {
             if (InvoiceHistoryDataGrid.SelectedItem is Invoice invoice)
             {
+                // Check if PDF file exists
+                if (string.IsNullOrWhiteSpace(invoice.PdfFilePath) || !System.IO.File.Exists(invoice.PdfFilePath))
+                {
+                    MessageBox.Show(
+                        "PDF file not found for this invoice. The invoice may have been created before file generation was implemented.\n\n" +
+                        "Please regenerate the invoice to create the PDF file.",
+                        "PDF Not Found",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
                 var dialog = new EmailDialog(invoice)
                 {
                     Owner = Window.GetWindow(this)

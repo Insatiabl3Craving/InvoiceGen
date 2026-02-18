@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using InvoiceGenerator.Services;
 
@@ -12,9 +13,18 @@ namespace InvoiceGenerator
         {
             base.OnStartup(e);
 
-            // Ensure database and tables exist before any view loads.
-            var settingsService = new SettingsService();
-            settingsService.InitializeDatabaseAsync().GetAwaiter().GetResult();
+            try
+            {
+                // Ensure database and tables exist before any view loads.
+                var settingsService = new SettingsService();
+                settingsService.InitializeDatabaseAsync().GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error initializing application: {ex.Message}\n\nStack Trace:\n{ex.StackTrace}", 
+                    "Startup Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Shutdown(1);
+            }
         }
     }
 }

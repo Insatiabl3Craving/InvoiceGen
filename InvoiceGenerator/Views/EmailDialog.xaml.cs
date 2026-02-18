@@ -50,6 +50,18 @@ namespace InvoiceGenerator.Views
                 return;
             }
 
+            // Validate PDF file exists
+            if (string.IsNullOrWhiteSpace(_invoice.PdfFilePath) || !System.IO.File.Exists(_invoice.PdfFilePath))
+            {
+                MessageBox.Show(
+                    $"PDF file not found: {_invoice.PdfFilePath}\n\n" +
+                    "The invoice file may have been moved or deleted. Please regenerate the invoice.",
+                    "File Not Found",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
+            }
+
             try
             {
                 var settings = await _settingsService.GetSettingsAsync();
@@ -63,16 +75,19 @@ namespace InvoiceGenerator.Views
                 var password = CredentialManager.GetPassword("InvoiceGeneratorEmail");
                 if (string.IsNullOrEmpty(password))
                 {
-                    MessageBox.Show("Email password not found in Credential Manager.", "Authentication Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Email password not found in Credential Manager.\n\nPlease go to Settings and save your email password again.", "Authentication Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
+
+                // Trim password in case of whitespace issues
+                password = password.Trim();
 
                 await _emailService.SendInvoiceEmailAsync(
                     settings.EmailSmtpServer,
                     settings.EmailSmtpPort,
-                    settings.EmailFromAddress,
+                    settings.EmailFromAddress.Trim(),
                     password,
-                    ToTB.Text,
+                    ToTB.Text.Trim(),
                     SubjectTB.Text,
                     BodyTB.Text,
                     _invoice.PdfFilePath,
@@ -88,7 +103,27 @@ namespace InvoiceGenerator.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error sending email: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                var errorMessage = $"Error sending email: {ex.Message}";
+                
+                // Add more details for common Gmail errors
+                if (ex.Message.Contains("5.7.9"))
+                {
+                    errorMessage += "\n\nThis is a Gmail app password error. Please verify:\n" +
+                        "1. You're using an App-Specific Password (not your regular password)\n" +
+                        "2. Two-factor authentication is enabled on your Gmail\n" +
+                        "3. The password is exactly 16 characters\n" +
+                        "4. The 'From Email' matches the Gmail account that created the app password";
+                }
+                else if (ex.Message.Contains("authentication"))
+                {
+                    errorMessage += "\n\nAuthentication failed. Double-check your email settings and app-specific password.";
+                }
+                else if (ex.InnerException != null)
+                {
+                    errorMessage += $"\n\nInner error: {ex.InnerException.Message}";
+                }
+                
+                MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

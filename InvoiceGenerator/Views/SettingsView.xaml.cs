@@ -103,8 +103,8 @@ namespace InvoiceGenerator.Views
                 await _emailService.TestSmtpConnectionAsync(
                     SmtpServer.Text,
                     port,
-                    FromEmail.Text,
-                    EmailPassword.Password,
+                    FromEmail.Text.Trim(),
+                    EmailPassword.Password.Trim(),
                     UseTlsCheckBox.IsChecked ?? true);
 
                 MessageBox.Show("Email connection test successful!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -112,6 +112,33 @@ namespace InvoiceGenerator.Views
             catch (Exception ex)
             {
                 MessageBox.Show($"Email connection test failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void VerifyPasswordBtn_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var storedPassword = CredentialManager.GetPassword("InvoiceGeneratorEmail");
+                
+                if (string.IsNullOrEmpty(storedPassword))
+                {
+                    MessageBox.Show("No password found in Credential Manager.\n\nPlease enter your app-specific password and click 'Save Settings'.",
+                        "Password Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+                else
+                {
+                    MessageBox.Show($"Password found in Credential Manager:\n\n" +
+                        $"Length: {storedPassword.Length} characters\n" +
+                        $"First 4 chars: {storedPassword.Substring(0, Math.Min(4, storedPassword.Length))}...\n" +
+                        $"Last 4 chars: ...{storedPassword.Substring(Math.Max(0, storedPassword.Length - 4))}\n\n" +
+                        $"Has whitespace: {(storedPassword != storedPassword.Trim() ? "YES - THIS IS THE PROBLEM!" : "No")}",
+                        "Stored Password Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error checking stored password: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -148,15 +175,28 @@ namespace InvoiceGenerator.Views
                 {
                     try
                     {
-                        CredentialManager.SavePassword("InvoiceGeneratorEmail", FromEmail.Text, EmailPassword.Password);
+                        var cleanPassword = EmailPassword.Password.Trim();
+                        CredentialManager.SavePassword("InvoiceGeneratorEmail", FromEmail.Text.Trim(), cleanPassword);
+                        MessageBox.Show($"Settings saved successfully!\n\nEmail password has been securely stored in Windows Credential Manager.\nPassword length: {cleanPassword.Length} characters", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
-                    catch
+                    catch (Exception credEx)
                     {
-                        // If saving to credential manager fails, just continue
+                        MessageBox.Show($"Settings saved, but failed to save email password securely: {credEx.Message}\n\nYou'll need to re-enter the password each time.", "Partial Success", MessageBoxButton.OK, MessageBoxImage.Warning);
                     }
                 }
-
-                MessageBox.Show("Settings saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                else
+                {
+                    // Check if password already exists in credential manager
+                    var existingPassword = CredentialManager.GetPassword("InvoiceGeneratorEmail");
+                    if (!string.IsNullOrEmpty(existingPassword))
+                    {
+                        MessageBox.Show("Settings saved successfully!\n\nYour previously saved email password is still stored securely.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Settings saved successfully!\n\nNote: Email password was not provided. Please enter it to send emails.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                }
             }
             catch (Exception ex)
             {
