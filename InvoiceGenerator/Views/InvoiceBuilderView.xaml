@@ -1,0 +1,60 @@
+<UserControl x:Class="InvoiceGenerator.Views.InvoiceBuilderView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="700" d:DesignWidth="900">
+    <StackPanel Margin="20" Background="White">
+        <TextBlock Text="Invoice Builder" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
+
+        <Grid Margin="0,0,0,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            
+            <TextBlock Text="Select Client:" VerticalAlignment="Center"/>
+            <ComboBox Name="ClientComboBox" Grid.Column="1" Height="35" Padding="10" SelectionChanged="ClientComboBox_SelectionChanged"/>
+        </Grid>
+
+        <Grid Margin="0,0,0,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            
+            <TextBlock Text="Invoice Number:" VerticalAlignment="Center"/>
+            <TextBox Name="InvoiceNumberTB" Grid.Column="1" Height="35" Padding="10"/>
+        </Grid>
+
+        <Grid Margin="0,0,0,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            
+            <TextBlock Text="Date From:" VerticalAlignment="Center"/>
+            <DatePicker Name="DateFromDP" Grid.Column="1" Height="35" Padding="10"/>
+        </Grid>
+
+        <Grid Margin="0,0,0,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            
+            <TextBlock Text="Date To:" VerticalAlignment="Center"/>
+            <DatePicker Name="DateToDP" Grid.Column="1" Height="35" Padding="10"/>
+        </Grid>
+
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+            <Button Name="ImportCsvBtn" Content="Import CSV" Width="120" Padding="10" Click="ImportCsvBtn_Click" Background="#007ACC" Foreground="White"/>
+            <Button Name="PreviewBtn" Content="Preview" Width="120" Padding="10" Margin="10,0" Click="PreviewBtn_Click"/>
+            <Button Name="GenerateBtn" Content="Generate Invoice" Width="150" Padding="10" Click="GenerateBtn_Click" Background="#107C10" Foreground="White"/>
+        </StackPanel>
+
+        <TextBlock Text="Preview:" FontSize="14" FontWeight="Bold" Margin="0,10,0,10"/>
+        <TextBox Name="PreviewTB" Height="200" Padding="10" IsReadOnly="True" TextWrapping="Wrap"/>
+    </StackPanel>
+</UserControl>

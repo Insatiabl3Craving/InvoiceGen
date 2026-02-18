@@ -1,0 +1,51 @@
+<Window x:Class="InvoiceGenerator.Views.ClientEditDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Client Editor" Height="400" Width="500" WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
+    <Border Padding="20">
+        <StackPanel>
+        <TextBlock Text="Client Information" FontSize="16" FontWeight="Bold" Margin="0,0,0,20"/>
+
+        <Grid Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="150"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Display Name:" VerticalAlignment="Center"/>
+            <TextBox Name="DisplayNameTB" Grid.Column="1" Padding="10" Height="35"/>
+        </Grid>
+
+        <Grid Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="150"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Contact Email:" VerticalAlignment="Center"/>
+            <TextBox Name="EmailTB" Grid.Column="1" Padding="10" Height="35"/>
+        </Grid>
+
+        <Grid Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="150"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Billing Address:" VerticalAlignment="Top" Margin="0,5,0,0"/>
+            <TextBox Name="AddressTB" Grid.Column="1" AcceptsReturn="True" TextWrapping="Wrap" Height="80"/>
+        </Grid>
+
+        <Grid Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="150"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Additional Info:" VerticalAlignment="Top" Margin="0,5,0,0"/>
+            <TextBox Name="AdditionalTB" Grid.Column="1" AcceptsReturn="True" TextWrapping="Wrap" Height="60"/>
+        </Grid>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Name="SaveBtn" Content="Save" Width="80" Padding="10" Click="SaveBtn_Click" Background="#007ACC" Foreground="White" Margin="0,0,10,0"/>
+            <Button Name="CancelBtn" Content="Cancel" Width="80" Padding="10" Click="CancelBtn_Click"/>
+        </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

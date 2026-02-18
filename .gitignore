@@ -1,0 +1,56 @@
+# Build outputs
+bin/
+obj/
+dist/
+build/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.sln.iml
+.vscode/
+
+# IDE and Editor
+launchSettings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Database and files
+*.db
+*.sqlite
+*.sqlite3
+*.log
+logs/
+
+# Invoice outputs and temp files
+Invoices/
+InvoiceOutput/
+Generated*/
+**/Invoices/
+**/Outputs/
+
+# Entity Framework migrations (optional - uncomment if not tracking migrations)
+# Migrations/
+
+# Code coverage
+coverage/
+*.opencover.xml
+*.coverage
+*.coveragexml
+TestResults/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node (if future web component)
+node_modules/
+npm-debug.log
+
+# Miscellaneous
+.env
+.env.local
+.env.*.local

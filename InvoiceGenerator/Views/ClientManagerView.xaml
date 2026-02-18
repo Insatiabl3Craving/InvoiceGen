@@ -1,0 +1,28 @@
+<UserControl x:Class="InvoiceGenerator.Views.ClientManagerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="900">
+    <Grid Background="White">
+        <StackPanel Margin="20">
+            <TextBlock Text="Client Manager" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
+            
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                <Button Name="AddClientBtn" Content="Add Client" Width="100" Padding="10" Click="AddClientBtn_Click" Background="#007ACC" Foreground="White"/>
+                <Button Name="EditClientBtn" Content="Edit Client" Width="100" Padding="10" Margin="10,0" Click="EditClientBtn_Click"/>
+                <Button Name="DeleteClientBtn" Content="Delete Client" Width="100" Padding="10" Click="DeleteClientBtn_Click"/>
+            </StackPanel>
+
+            <DataGrid Name="ClientsDataGrid" AutoGenerateColumns="False" Height="400" MouseDoubleClick="ClientsDataGrid_MouseDoubleClick">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Display Name" Binding="{Binding DisplayName}" Width="200"/>
+                    <DataGridTextColumn Header="Email" Binding="{Binding ContactEmail}" Width="200"/>
+                    <DataGridTextColumn Header="Address" Binding="{Binding BillingAddress}" Width="300"/>
+                    <DataGridTextColumn Header="Created" Binding="{Binding CreatedDate, StringFormat='yyyy-MM-dd'}" Width="100"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </StackPanel>
+    </Grid>
+</UserControl>
