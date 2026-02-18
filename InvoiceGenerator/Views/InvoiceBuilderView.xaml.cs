@@ -16,6 +16,8 @@ namespace InvoiceGenerator.Views
         private readonly InvoiceService _invoiceService = new();
         private readonly CsvImportService _csvService = new();
         private readonly SettingsService _settingsService = new();
+        private readonly WordTemplateService _wordTemplateService = new();
+        private readonly PdfConversionService _pdfConversionService = new();
         private List<InvoiceLineItem> _currentLineItems = new();
         private Client? _selectedClient;
 
@@ -149,13 +151,57 @@ namespace InvoiceGenerator.Views
                     return;
                 }
 
-                // Create invoice
+                if (string.IsNullOrWhiteSpace(settings.InvoicesFolderPath))
+                {
+                    MessageBox.Show("Please configure the invoices folder path in Settings.", "Configuration Required", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                // Ensure output directory exists
+                System.IO.Directory.CreateDirectory(settings.InvoicesFolderPath);
+
+                // Generate file paths
+                var fileName = $"Invoice_{InvoiceNumberTB.Text}_{DateTime.Now:yyyyMMdd_HHmmss}";
+                var docxPath = System.IO.Path.Combine(settings.InvoicesFolderPath, fileName + ".docx");
+                var pdfPath = System.IO.Path.Combine(settings.InvoicesFolderPath, fileName + ".pdf");
+
+                // Prepare template replacements
+                var replacements = new Dictionary<string, string>
+                {
+                    { "INVOICE_NUMBER", InvoiceNumberTB.Text },
+                    { "CLIENT_NAME", _selectedClient.DisplayName },
+                    { "CLIENT_EMAIL", _selectedClient.ContactEmail },
+                    { "CLIENT_ADDRESS", _selectedClient.BillingAddress },
+                    { "DATE_FROM", DateFromDP.SelectedDate.Value.ToString("yyyy-MM-dd") },
+                    { "DATE_TO", DateToDP.SelectedDate.Value.ToString("yyyy-MM-dd") },
+                    { "DATE_GENERATED", DateTime.Now.ToString("yyyy-MM-dd") },
+                    { "TOTAL_AMOUNT", _currentLineItems.Sum(i => i.Amount).ToString("F2") }
+                };
+
+                // Add line items as a formatted string
+                var lineItemsText = new StringBuilder();
+                foreach (var item in _currentLineItems)
+                {
+                    lineItemsText.AppendLine($"{item.Description} - Qty: {item.Quantity} x ${item.UnitRate:F2} = ${item.Amount:F2}");
+                }
+                replacements["LINE_ITEMS"] = lineItemsText.ToString();
+
+                // Generate DOCX from template
+                _wordTemplateService.ReplaceTemplateFields(settings.TemplateFilePath, docxPath, replacements);
+
+                // Convert to PDF
+                _pdfConversionService.ConvertDocxToPdf(docxPath, pdfPath);
+
+                // Create invoice record
                 var invoice = new Invoice
                 {
                     InvoiceNumber = InvoiceNumberTB.Text,
                     ClientId = _selectedClient.Id,
                     DateFrom = DateFromDP.SelectedDate.Value,
                     DateTo = DateToDP.SelectedDate.Value,
+                    DocxFilePath = docxPath,
+                    PdfFilePath = pdfPath,
+                    Status = "Generated",
                     LineItems = _currentLineItems
                 };
 
@@ -167,7 +213,7 @@ namespace InvoiceGenerator.Views
                     item.InvoiceId = savedInvoice.Id;
                 }
 
-                MessageBox.Show("Invoice generated successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show($"Invoice generated successfully!\n\nSaved to: {settings.InvoicesFolderPath}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 ClearForm();
             }
             catch (Exception ex)

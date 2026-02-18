@@ -3,6 +3,8 @@ using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
 using InvoiceGenerator.Services;
+using FolderBrowserDialog = System.Windows.Forms.FolderBrowserDialog;
+using DialogResult = System.Windows.Forms.DialogResult;
 
 namespace InvoiceGenerator.Views
 {
@@ -60,16 +62,24 @@ namespace InvoiceGenerator.Views
 
         private void BrowseFolderBtn_Click(object sender, RoutedEventArgs e)
         {
-            // For simplicity, show a message with instructions
-            MessageBox.Show(
-                "Please enter the full path to your invoices folder.\n\n" +
-                "Example: C:\\Users\\YourName\\Documents\\Invoices",
-                "Select Invoices Folder",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
-            
-            // Focus on the text box for user input
-            InvoicesFolderPath.Focus();
+            using var folderBrowser = new FolderBrowserDialog
+            {
+                Description = "Select the folder where invoices will be saved",
+                UseDescriptionForTitle = true,
+                ShowNewFolderButton = true
+            };
+
+            // Set initial directory if path exists
+            if (!string.IsNullOrWhiteSpace(InvoicesFolderPath.Text) && 
+                System.IO.Directory.Exists(InvoicesFolderPath.Text))
+            {
+                folderBrowser.SelectedPath = InvoicesFolderPath.Text;
+            }
+
+            if (folderBrowser.ShowDialog() == DialogResult.OK)
+            {
+                InvoicesFolderPath.Text = folderBrowser.SelectedPath;
+            }
         }
 
         private async void TestEmailBtn_Click(object sender, RoutedEventArgs e)
