@@ -40,8 +40,8 @@ namespace InvoiceGenerator.Services
                                 var quantityStr = csv.GetField("Quantity") ?? "0";
                                 var unitRateStr = csv.GetField("UnitRate") ?? "0";
 
-                                if (decimal.TryParse(quantityStr, out var quantity) &&
-                                    decimal.TryParse(unitRateStr, out var unitRate))
+                                if (decimal.TryParse(quantityStr, System.Globalization.NumberStyles.Number, CultureInfo.InvariantCulture, out var quantity) &&
+                                    decimal.TryParse(unitRateStr, System.Globalization.NumberStyles.Number, CultureInfo.InvariantCulture, out var unitRate))
                                 {
                                     var amount = quantity * unitRate;
 

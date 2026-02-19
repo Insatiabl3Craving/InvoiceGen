@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
@@ -56,20 +57,62 @@ namespace InvoiceGenerator.Services
 
         private void ReplaceTextInElement(OpenXmlElement element, Dictionary<string, string> replacements)
         {
-            foreach (var run in element.Descendants<Run>())
+            // Process each paragraph so that placeholders split across multiple runs are handled
+            foreach (var paragraph in element.Descendants<Paragraph>())
             {
-                foreach (var text in run.Descendants<Text>())
+                ReplacePlaceholdersInParagraph(paragraph, replacements);
+            }
+        }
+
+        private static void ReplacePlaceholdersInParagraph(Paragraph paragraph, Dictionary<string, string> replacements)
+        {
+            var texts = paragraph.Descendants<Text>().ToList();
+            if (texts.Count == 0) return;
+
+            // First pass: simple per-Text-node replacement (covers the common case)
+            foreach (var text in texts)
+            {
+                foreach (var kvp in replacements)
                 {
-                    foreach (var kvp in replacements)
+                    var pattern = $@"{{\{{{Regex.Escape(kvp.Key)}\}}}}";
+                    if (Regex.IsMatch(text.Text, pattern, RegexOptions.IgnoreCase))
                     {
-                        // Replace placeholder with the value
-                        var pattern = $@"{{\{{{Regex.Escape(kvp.Key)}\}}}}";
-                        if (Regex.IsMatch(text.Text, pattern, RegexOptions.IgnoreCase))
-                        {
-                            text.Text = Regex.Replace(text.Text, pattern, kvp.Value, RegexOptions.IgnoreCase);
-                        }
+                        text.Text = Regex.Replace(text.Text, pattern, kvp.Value, RegexOptions.IgnoreCase);
                     }
                 }
+            }
+
+            // Second pass: if any placeholder still spans multiple runs, consolidate paragraph text
+            var fullText = string.Concat(paragraph.Descendants<Text>().Select(t => t.Text));
+            bool stillHasPlaceholder = false;
+            foreach (var kvp in replacements)
+            {
+                var pattern = $@"{{\{{{Regex.Escape(kvp.Key)}\}}}}";
+                if (Regex.IsMatch(fullText, pattern, RegexOptions.IgnoreCase))
+                {
+                    stillHasPlaceholder = true;
+                    break;
+                }
+            }
+
+            if (!stillHasPlaceholder) return;
+
+            // Merge all text into the first Text node, clear the rest, then do replacement
+            var allTexts = paragraph.Descendants<Text>().ToList();
+            if (allTexts.Count == 0) return;
+
+            var mergedText = string.Concat(allTexts.Select(t => t.Text));
+            foreach (var kvp in replacements)
+            {
+                var pattern = $@"{{\{{{Regex.Escape(kvp.Key)}\}}}}";
+                mergedText = Regex.Replace(mergedText, pattern, kvp.Value, RegexOptions.IgnoreCase);
+            }
+
+            allTexts[0].Text = mergedText;
+            allTexts[0].Space = DocumentFormat.OpenXml.SpaceProcessingModeValues.Preserve;
+            for (int i = 1; i < allTexts.Count; i++)
+            {
+                allTexts[i].Text = string.Empty;
             }
         }
     }
