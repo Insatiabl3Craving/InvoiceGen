@@ -85,12 +85,22 @@ namespace InvoiceGenerator.Services
                     if (process == null)
                         throw new Exception("Failed to start LibreOffice conversion process");
 
-                    process.WaitForExit(60000); // Wait up to 60 seconds
+                    // Read stderr asynchronously to prevent buffer deadlock
+                    var errorOutputTask = System.Threading.Tasks.Task.Run(() =>
+                        process.StandardError.ReadToEnd());
+
+                    var completed = process.WaitForExit(60000); // Wait up to 60 seconds
+                    var errorOutput = errorOutputTask.Result;
+
+                    if (!completed)
+                    {
+                        try { process.Kill(); } catch { }
+                        throw new Exception("LibreOffice conversion timed out after 60 seconds.");
+                    }
 
                     if (process.ExitCode != 0)
                     {
-                        var error = process.StandardError.ReadToEnd();
-                        throw new Exception($"LibreOffice conversion failed with exit code {process.ExitCode}: {error}");
+                        throw new Exception($"LibreOffice conversion failed with exit code {process.ExitCode}: {errorOutput}");
                     }
                 }
 
@@ -99,10 +109,6 @@ namespace InvoiceGenerator.Services
                 if (File.Exists(defaultNewName) && defaultNewName != pdfPath)
                 {
                     File.Move(defaultNewName, pdfPath, true);
-                }
-                else if (!File.Exists(pdfPath) && File.Exists(defaultNewName))
-                {
-                    File.Move(defaultNewName, pdfPath);
                 }
 
                 if (!File.Exists(pdfPath))

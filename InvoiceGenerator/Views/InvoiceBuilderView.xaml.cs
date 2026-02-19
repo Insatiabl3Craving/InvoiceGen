@@ -152,6 +152,12 @@ namespace InvoiceGenerator.Views
                 return;
             }
 
+            if (DateFromDP.SelectedDate.Value > DateToDP.SelectedDate.Value)
+            {
+                MessageBox.Show("Date From must be before or equal to Date To.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             try
             {
                 var settings = await _settingsService.GetSettingsAsync();
