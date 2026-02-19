@@ -15,7 +15,7 @@
                 <Button Name="RefreshBtn" Content="Refresh" Width="80" Padding="10" Margin="10,0" Click="RefreshBtn_Click"/>
             </StackPanel>
 
-            <DataGrid Name="InvoiceHistoryDataGrid" AutoGenerateColumns="False" Height="400" MouseDoubleClick="InvoiceHistoryDataGrid_MouseDoubleClick">
+            <DataGrid Name="InvoiceHistoryDataGrid" AutoGenerateColumns="False" Height="400" SelectionMode="Extended" MouseDoubleClick="InvoiceHistoryDataGrid_MouseDoubleClick">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Invoice #" Binding="{Binding InvoiceNumber}" Width="120"/>
                     <DataGridTextColumn Header="Client" Binding="{Binding Client.DisplayName}" Width="200"/>
@@ -30,6 +30,7 @@
                 <Button Name="OpenDocxBtn" Content="Open DOCX" Width="100" Padding="10" Click="OpenDocxBtn_Click" Margin="0,0,10,0"/>
                 <Button Name="OpenPdfBtn" Content="Open PDF" Width="100" Padding="10" Click="OpenPdfBtn_Click" Margin="0,0,10,0"/>
                 <Button Name="SendEmailBtn" Content="Send Email" Width="100" Padding="10" Click="SendEmailBtn_Click" Margin="0,0,10,0"/>
+                <Button Name="DeleteBtn" Content="Delete" Width="100" Padding="10" Click="DeleteBtn_Click" Background="#D13438" Foreground="White"/>
             </StackPanel>
         </StackPanel>
     </Grid>

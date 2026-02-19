@@ -9,6 +9,14 @@ namespace InvoiceGenerator.Services
 {
     public class ClientService
     {
+        public async Task<bool> HasInvoicesAsync(int clientId)
+        {
+            using (var context = new InvoiceGeneratorDbContext())
+            {
+                return await context.Invoices.AnyAsync(i => i.ClientId == clientId);
+            }
+        }
+
         public async Task<List<Client>> GetAllClientsAsync()
         {
             using (var context = new InvoiceGeneratorDbContext())

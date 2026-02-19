@@ -64,6 +64,26 @@ namespace InvoiceGenerator.Views
         {
             if (ClientsDataGrid.SelectedItem is Client client)
             {
+                try
+                {
+                    var hasInvoices = await _clientService.HasInvoicesAsync(client.Id);
+                    if (hasInvoices)
+                    {
+                        MessageBox.Show(
+                            $"Cannot delete '{client.DisplayName}' because there are invoices associated with this client.\n\n" +
+                            "Please delete all invoices for this client first, or keep the client record for history.",
+                            "Cannot Delete",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error checking client invoices: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
                 if (MessageBox.Show($"Are you sure you want to delete '{client.DisplayName}'?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 {
                     try
