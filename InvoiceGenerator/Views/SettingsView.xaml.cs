@@ -129,11 +129,11 @@ namespace InvoiceGenerator.Views
                 }
                 else
                 {
-                    MessageBox.Show($"Password found in Credential Manager:\n\n" +
+                    var hasWhitespace = storedPassword != storedPassword.Trim();
+                    var message = $"Password found in Credential Manager.\n\n" +
                         $"Length: {storedPassword.Length} characters\n" +
-                        $"First 4 chars: {storedPassword.Substring(0, Math.Min(4, storedPassword.Length))}...\n" +
-                        $"Last 4 chars: ...{storedPassword.Substring(Math.Max(0, storedPassword.Length - 4))}\n\n" +
-                        $"Has whitespace: {(storedPassword != storedPassword.Trim() ? "YES - THIS IS THE PROBLEM!" : "No")}",
+                        $"Has whitespace: {(hasWhitespace ? "YES - THIS IS THE PROBLEM!" : "No")}";
+                    MessageBox.Show(message,
                         "Stored Password Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }

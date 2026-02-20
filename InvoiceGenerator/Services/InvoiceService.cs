@@ -102,7 +102,8 @@ namespace InvoiceGenerator.Services
 
                 if (endDate.HasValue)
                 {
-                    query = query.Where(i => i.DateGenerated <= endDate.Value);
+                    var endOfDay = endDate.Value.Date.AddDays(1);
+                    query = query.Where(i => i.DateGenerated < endOfDay);
                 }
 
                 return await query.OrderByDescending(i => i.DateGenerated).ToListAsync();
