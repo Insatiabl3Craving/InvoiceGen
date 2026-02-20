@@ -11,7 +11,6 @@ namespace InvoiceGenerator.Views
         private readonly AuthService _authService = new();
         private readonly bool _isLockScreenMode;
         private bool _isSetupMode;
-        private bool _isPasswordVisible = false;
 
         public AppPasswordDialog(bool isLockScreenMode = false)
         {
@@ -60,37 +59,60 @@ namespace InvoiceGenerator.Views
             }
         }
 
-        /// <summary>
-        /// Toggle password visibility for the main password field
-        /// </summary>
-        private void TogglePasswordVisibility_Click(object sender, RoutedEventArgs e)
+        private void ShowPrimaryPassword()
         {
             if (_isLockScreenMode)
             {
                 return;
             }
 
-            _isPasswordVisible = !_isPasswordVisible;
-
-            if (_isPasswordVisible)
-            {
-                // Show password as plain text
-                PasswordTextBox.Text = PasswordBox.Password;
-                PasswordBox.Visibility = Visibility.Collapsed;
-                PasswordTextBox.Visibility = Visibility.Visible;
-                PasswordTextBox.Focus();
-                PasswordTextBox.CaretIndex = PasswordTextBox.Text.Length;
-            }
-            else
-            {
-                // Hide password
-                PasswordBox.Password = PasswordTextBox.Text;
-                PasswordTextBox.Visibility = Visibility.Collapsed;
-                PasswordBox.Visibility = Visibility.Visible;
-                PasswordBox.Focus();
-            }
+            PasswordTextBox.Text = PasswordBox.Password;
+            PasswordBox.Visibility = Visibility.Collapsed;
+            PasswordTextBox.Visibility = Visibility.Visible;
+            PasswordTextBox.Focus();
+            PasswordTextBox.CaretIndex = PasswordTextBox.Text.Length;
 
             UpdatePasswordPlaceholderVisibility();
+        }
+
+        private void HidePrimaryPassword()
+        {
+            PasswordBox.Password = PasswordTextBox.Text;
+            PasswordTextBox.Visibility = Visibility.Collapsed;
+            PasswordBox.Visibility = Visibility.Visible;
+            PasswordBox.Focus();
+
+            UpdatePasswordPlaceholderVisibility();
+        }
+
+        private void RevealPasswordButton_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            ShowPrimaryPassword();
+        }
+
+        private void RevealPasswordButton_PreviewMouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            HidePrimaryPassword();
+        }
+
+        private void RevealPasswordButton_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            HidePrimaryPassword();
+        }
+
+        private void RevealPasswordButton_LostMouseCapture(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            HidePrimaryPassword();
+        }
+
+        private void RevealPasswordButton_PreviewTouchDown(object sender, System.Windows.Input.TouchEventArgs e)
+        {
+            ShowPrimaryPassword();
+        }
+
+        private void RevealPasswordButton_PreviewTouchUp(object sender, System.Windows.Input.TouchEventArgs e)
+        {
+            HidePrimaryPassword();
         }
 
         private void PasswordInput_Changed(object sender, RoutedEventArgs e)
@@ -113,30 +135,51 @@ namespace InvoiceGenerator.Views
                 : Visibility.Collapsed;
         }
 
-        /// <summary>
-        /// Toggle password visibility for the confirm password field
-        /// </summary>
-        private void ToggleConfirmVisibility_Click(object sender, RoutedEventArgs e)
+        private void ShowConfirmPassword()
         {
-            bool isConfirmVisible = ConfirmPasswordTextBox.Visibility == Visibility.Visible;
+            ConfirmPasswordTextBox.Text = ConfirmPasswordBox.Password;
+            ConfirmPasswordBox.Visibility = Visibility.Collapsed;
+            ConfirmPasswordTextBox.Visibility = Visibility.Visible;
+            ConfirmPasswordTextBox.Focus();
+            ConfirmPasswordTextBox.CaretIndex = ConfirmPasswordTextBox.Text.Length;
+        }
 
-            if (!isConfirmVisible)
-            {
-                // Show password as plain text
-                ConfirmPasswordTextBox.Text = ConfirmPasswordBox.Password;
-                ConfirmPasswordBox.Visibility = Visibility.Collapsed;
-                ConfirmPasswordTextBox.Visibility = Visibility.Visible;
-                ConfirmPasswordTextBox.Focus();
-                ConfirmPasswordTextBox.CaretIndex = ConfirmPasswordTextBox.Text.Length;
-            }
-            else
-            {
-                // Hide password
-                ConfirmPasswordBox.Password = ConfirmPasswordTextBox.Text;
-                ConfirmPasswordTextBox.Visibility = Visibility.Collapsed;
-                ConfirmPasswordBox.Visibility = Visibility.Visible;
-                ConfirmPasswordBox.Focus();
-            }
+        private void HideConfirmPassword()
+        {
+            ConfirmPasswordBox.Password = ConfirmPasswordTextBox.Text;
+            ConfirmPasswordTextBox.Visibility = Visibility.Collapsed;
+            ConfirmPasswordBox.Visibility = Visibility.Visible;
+            ConfirmPasswordBox.Focus();
+        }
+
+        private void RevealConfirmButton_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            ShowConfirmPassword();
+        }
+
+        private void RevealConfirmButton_PreviewMouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            HideConfirmPassword();
+        }
+
+        private void RevealConfirmButton_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            HideConfirmPassword();
+        }
+
+        private void RevealConfirmButton_LostMouseCapture(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            HideConfirmPassword();
+        }
+
+        private void RevealConfirmButton_PreviewTouchDown(object sender, System.Windows.Input.TouchEventArgs e)
+        {
+            ShowConfirmPassword();
+        }
+
+        private void RevealConfirmButton_PreviewTouchUp(object sender, System.Windows.Input.TouchEventArgs e)
+        {
+            HideConfirmPassword();
         }
 
         /// <summary>
@@ -144,7 +187,7 @@ namespace InvoiceGenerator.Views
         /// </summary>
         private string GetCurrentPassword()
         {
-            return _isPasswordVisible ? PasswordTextBox.Text : PasswordBox.Password;
+            return PasswordTextBox.Visibility == Visibility.Visible ? PasswordTextBox.Text : PasswordBox.Password;
         }
 
         /// <summary>
