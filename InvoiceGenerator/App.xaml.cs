@@ -30,7 +30,17 @@ namespace InvoiceGenerator
                     return;
                 }
 
+                var startupLeft = passwordDialog.Left;
+                var startupTop = passwordDialog.Top;
+                var startupWidth = passwordDialog.ActualWidth > 0 ? passwordDialog.ActualWidth : passwordDialog.Width;
+                var startupHeight = passwordDialog.ActualHeight > 0 ? passwordDialog.ActualHeight : passwordDialog.Height;
+
                 var mainWindow = new MainWindow();
+                mainWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+                mainWindow.Left = startupLeft;
+                mainWindow.Top = startupTop;
+                mainWindow.Width = startupWidth;
+                mainWindow.Height = startupHeight;
                 MainWindow = mainWindow;
                 ShutdownMode = ShutdownMode.OnMainWindowClose;
                 mainWindow.Show();
