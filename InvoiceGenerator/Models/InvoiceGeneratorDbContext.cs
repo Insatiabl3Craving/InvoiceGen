@@ -4,10 +4,10 @@ namespace InvoiceGenerator.Models
 {
     public class InvoiceGeneratorDbContext : DbContext
     {
-public DbSet<Client> Clients { get; set; } = null!;
-    public DbSet<Invoice> Invoices { get; set; } = null!;
-    public DbSet<InvoiceLineItem> InvoiceLineItems { get; set; } = null!;
-    public DbSet<AppSettings> AppSettings { get; set; } = null!;
+        public DbSet<Client> Clients { get; set; } = null!;
+        public DbSet<Invoice> Invoices { get; set; } = null!;
+        public DbSet<InvoiceLineItem> InvoiceLineItems { get; set; } = null!;
+        public DbSet<AppSettings> AppSettings { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

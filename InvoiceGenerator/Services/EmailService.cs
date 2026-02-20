@@ -38,8 +38,7 @@ namespace InvoiceGenerator.Services
 
                 var bodyBuilder = new BodyBuilder
                 {
-                    TextBody = body,
-                    HtmlBody = body
+                    TextBody = body
                 };
 
                 // Attach PDF

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace InvoiceGenerator.Services
 {
@@ -9,7 +10,7 @@ namespace InvoiceGenerator.Services
         /// Converts a .docx file to PDF using LibreOffice
         /// This is the recommended method as it works reliably with LibreOffice installed
         /// </summary>
-        public void ConvertDocxToPdf(string docxPath, string pdfPath)
+        public async Task ConvertDocxToPdfAsync(string docxPath, string pdfPath)
         {
             try
             {
@@ -18,11 +19,11 @@ namespace InvoiceGenerator.Services
 
                 // Ensure output directory exists
                 var outputDir = Path.GetDirectoryName(pdfPath) ?? "";
-                if (!Directory.Exists(outputDir))
+                if (!string.IsNullOrEmpty(outputDir) && !Directory.Exists(outputDir))
                     Directory.CreateDirectory(outputDir);
 
                 // Use LibreOffice UNO API for conversion
-                ConvertDocxToPdfUsingLibreOffice(docxPath, pdfPath);
+                await ConvertDocxToPdfUsingLibreOfficeAsync(docxPath, pdfPath);
             }
             catch (Exception ex)
             {
@@ -33,18 +34,10 @@ namespace InvoiceGenerator.Services
         /// <summary>
         /// Uses LibreOffice UNO API for conversion (requires LibreOffice installed)
         /// </summary>
-        private void ConvertDocxToPdfUsingLibreOffice(string docxPath, string pdfPath)
+        private static async Task ConvertDocxToPdfUsingLibreOfficeAsync(string docxPath, string pdfPath)
         {
             try
             {
-                if (!File.Exists(docxPath))
-                    throw new FileNotFoundException($"DOCX file not found: {docxPath}");
-
-                // Ensure output directory exists
-                var outputDir = Path.GetDirectoryName(pdfPath) ?? "";
-                if (!Directory.Exists(outputDir))
-                    Directory.CreateDirectory(outputDir);
-
                 // Try common LibreOffice paths
                 var libreOfficePaths = new[]
                 {
@@ -85,24 +78,30 @@ namespace InvoiceGenerator.Services
                     if (process == null)
                         throw new Exception("Failed to start LibreOffice conversion process");
 
-                    process.WaitForExit(60000); // Wait up to 60 seconds
+                    // Read stderr asynchronously to prevent buffer deadlock
+                    var stderrTask = process.StandardError.ReadToEndAsync();
+
+                    bool exited = process.WaitForExit(60000); // Wait up to 60 seconds
+
+                    var error = await stderrTask;
+
+                    if (!exited)
+                    {
+                        try { process.Kill(); } catch { }
+                        throw new Exception("LibreOffice conversion timed out after 60 seconds.");
+                    }
 
                     if (process.ExitCode != 0)
                     {
-                        var error = process.StandardError.ReadToEnd();
                         throw new Exception($"LibreOffice conversion failed with exit code {process.ExitCode}: {error}");
                     }
                 }
 
                 // Rename the output file to match expected name if needed
                 var defaultNewName = Path.Combine(outputDirFullPath, Path.GetFileNameWithoutExtension(docxPath) + ".pdf");
-                if (File.Exists(defaultNewName) && defaultNewName != pdfPath)
+                if (File.Exists(defaultNewName) && !string.Equals(defaultNewName, pdfPath, StringComparison.OrdinalIgnoreCase))
                 {
                     File.Move(defaultNewName, pdfPath, true);
-                }
-                else if (!File.Exists(pdfPath) && File.Exists(defaultNewName))
-                {
-                    File.Move(defaultNewName, pdfPath);
                 }
 
                 if (!File.Exists(pdfPath))
