@@ -154,7 +154,13 @@ namespace InvoiceGenerator.Views
 
             if (DateFromDP.SelectedDate.Value > DateToDP.SelectedDate.Value)
             {
-                MessageBox.Show("Date From must be before or equal to Date To.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Date From must not be after Date To.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (_currentLineItems.Count == 0)
+            {
+                MessageBox.Show("No line items imported. Please import a CSV file before generating the invoice.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -222,7 +228,7 @@ namespace InvoiceGenerator.Views
                 _wordTemplateService.ReplaceTemplateFields(settings.TemplateFilePath, docxPath, replacements);
 
                 // Convert to PDF
-                _pdfConversionService.ConvertDocxToPdf(docxPath, pdfPath);
+                await _pdfConversionService.ConvertDocxToPdfAsync(docxPath, pdfPath);
 
                 // Create invoice record
                 var invoice = new Invoice
@@ -262,6 +268,7 @@ namespace InvoiceGenerator.Views
             _currentLineItems.Clear();
             PreviewTB.Clear();
             ClientComboBox.SelectedIndex = -1;
+            _selectedClient = null;
         }
     }
 }
