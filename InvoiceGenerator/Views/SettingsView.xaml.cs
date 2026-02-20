@@ -239,8 +239,17 @@ namespace InvoiceGenerator.Views
                         return;
                     }
 
-                    var isValid = await _authService.VerifyPasswordAsync(CurrentAppPassword.Password);
-                    if (!isValid)
+                    var verifyResult = await _authService.VerifyPasswordWithPolicyAsync(CurrentAppPassword.Password);
+                    if (verifyResult.Status == PasswordVerificationStatus.LockedOut)
+                    {
+                        var lockoutSeconds = Math.Max(0, (int)Math.Ceiling(verifyResult.LockoutRemaining.TotalSeconds));
+                        var lockoutMinutes = lockoutSeconds / 60;
+                        var lockoutRemainder = lockoutSeconds % 60;
+                        MessageBox.Show($"Too many incorrect passwords. Try again in {lockoutMinutes:D2}:{lockoutRemainder:D2}.", "Temporarily Locked", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+
+                    if (verifyResult.Status != PasswordVerificationStatus.Success)
                     {
                         MessageBox.Show("Current password is incorrect.", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Warning);
                         return;

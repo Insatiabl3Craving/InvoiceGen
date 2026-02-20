@@ -18,5 +18,8 @@ namespace InvoiceGenerator.Models
         public string? AppPasswordSalt { get; set; }
         public int AppPasswordIterations { get; set; }
         public DateTime? AppPasswordCreatedUtc { get; set; }
+        public int AppPasswordFailedAttempts { get; set; }
+        public DateTime? AppPasswordLastFailedUtc { get; set; }
+        public DateTime? AppPasswordLockoutUntilUtc { get; set; }
     }
 }

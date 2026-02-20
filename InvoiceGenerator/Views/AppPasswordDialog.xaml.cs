@@ -285,13 +285,28 @@ namespace InvoiceGenerator.Views
 
             try
             {
-                var isValid = await _authService.VerifyPasswordAsync(GetCurrentPassword());
-                if (!isValid)
+                var result = await _authService.VerifyPasswordWithPolicyAsync(GetCurrentPassword());
+
+                if (result.Status == PasswordVerificationStatus.LockedOut)
+                {
+                    ShowVerifyError($"Too many attempts. Try again in {FormatDuration(result.LockoutRemaining)}.");
+                    ClearPasswordFields();
+                    PasswordBox.Focus();
+                    return;
+                }
+
+                if (result.Status == PasswordVerificationStatus.InvalidPassword)
                 {
                     await PlayShakeAnimationAsync();
                     ShowVerifyError("That didn't work, please try again");
                     ClearPasswordFields();
                     PasswordBox.Focus();
+                    return;
+                }
+
+                if (result.Status == PasswordVerificationStatus.PasswordNotSet)
+                {
+                    ShowVerifyError("Password is not configured.");
                     return;
                 }
 
@@ -305,6 +320,15 @@ namespace InvoiceGenerator.Views
                 await PlayShakeAnimationAsync();
                 MessageBox.Show($"Error verifying password: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private static string FormatDuration(TimeSpan duration)
+        {
+            var safeDuration = duration > TimeSpan.Zero ? duration : TimeSpan.Zero;
+            var totalSeconds = (int)Math.Ceiling(safeDuration.TotalSeconds);
+            var minutes = totalSeconds / 60;
+            var seconds = totalSeconds % 60;
+            return $"{minutes:D2}:{seconds:D2}";
         }
 
         private void CancelBtn_Click(object sender, RoutedEventArgs e)

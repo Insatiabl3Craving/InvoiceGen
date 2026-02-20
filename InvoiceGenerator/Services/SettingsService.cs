@@ -84,6 +84,21 @@ namespace InvoiceGenerator.Services
                     alterStatements.Add("ALTER TABLE AppSettings ADD COLUMN AppPasswordCreatedUtc TEXT NULL;");
                 }
 
+                if (!existingColumns.Contains("AppPasswordFailedAttempts"))
+                {
+                    alterStatements.Add("ALTER TABLE AppSettings ADD COLUMN AppPasswordFailedAttempts INTEGER NOT NULL DEFAULT 0;");
+                }
+
+                if (!existingColumns.Contains("AppPasswordLastFailedUtc"))
+                {
+                    alterStatements.Add("ALTER TABLE AppSettings ADD COLUMN AppPasswordLastFailedUtc TEXT NULL;");
+                }
+
+                if (!existingColumns.Contains("AppPasswordLockoutUntilUtc"))
+                {
+                    alterStatements.Add("ALTER TABLE AppSettings ADD COLUMN AppPasswordLockoutUntilUtc TEXT NULL;");
+                }
+
                 foreach (var sql in alterStatements)
                 {
                     using var alterCommand = connection.CreateCommand();
