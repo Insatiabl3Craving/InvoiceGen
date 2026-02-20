@@ -9,11 +9,13 @@ namespace InvoiceGenerator.Views
     public partial class AppPasswordDialog : Window
     {
         private readonly AuthService _authService = new();
+        private readonly bool _isLockScreenMode;
         private bool _isSetupMode;
         private bool _isPasswordVisible = false;
 
-        public AppPasswordDialog()
+        public AppPasswordDialog(bool isLockScreenMode = false)
         {
+            _isLockScreenMode = isLockScreenMode;
             InitializeComponent();
             Loaded += AppPasswordDialog_Loaded;
         }
@@ -26,6 +28,20 @@ namespace InvoiceGenerator.Views
 
         private async Task ConfigureModeAsync()
         {
+            if (_isLockScreenMode)
+            {
+                _isSetupMode = false;
+                ConfirmPanel.Visibility = Visibility.Collapsed;
+                HintText.Text = "Session locked after inactivity. Enter your password to continue.";
+                ContinueBtn.Content = "Unlock";
+                CancelBtn.Content = "Exit";
+
+                ResizeMode = ResizeMode.NoResize;
+                ShowInTaskbar = false;
+                TogglePasswordVisibility.Visibility = Visibility.Collapsed;
+                return;
+            }
+
             _isSetupMode = !await _authService.IsPasswordSetAsync();
 
             if (_isSetupMode)
@@ -49,6 +65,11 @@ namespace InvoiceGenerator.Views
         /// </summary>
         private void TogglePasswordVisibility_Click(object sender, RoutedEventArgs e)
         {
+            if (_isLockScreenMode)
+            {
+                return;
+            }
+
             _isPasswordVisible = !_isPasswordVisible;
 
             if (_isPasswordVisible)
