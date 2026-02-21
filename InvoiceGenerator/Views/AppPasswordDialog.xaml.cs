@@ -32,12 +32,10 @@ namespace InvoiceGenerator.Views
                 _isSetupMode = false;
                 ConfirmPanel.Visibility = Visibility.Collapsed;
                 HintText.Text = "Session locked after inactivity. Enter your password to continue.";
-                ContinueBtn.Content = "Unlock";
-                CancelBtn.Content = "Exit";
 
                 ResizeMode = ResizeMode.NoResize;
                 ShowInTaskbar = false;
-                TogglePasswordVisibility.Visibility = Visibility.Collapsed;
+                InlineSubmitBtn.ToolTip = "Unlock";
                 return;
             }
 
@@ -47,25 +45,18 @@ namespace InvoiceGenerator.Views
             {
                 ConfirmPanel.Visibility = Visibility.Visible;
                 HintText.Text = "Choose a password you will remember. Minimum 8 characters.";
-                ContinueBtn.Content = "Set Password";
-                CancelBtn.Content = "Exit";
+                InlineSubmitBtn.ToolTip = "Set Password";
             }
             else
             {
                 ConfirmPanel.Visibility = Visibility.Collapsed;
                 HintText.Text = "";
-                ContinueBtn.Content = "Continue";
-                CancelBtn.Content = "Exit";
+                InlineSubmitBtn.ToolTip = "Continue";
             }
         }
 
         private void ShowPrimaryPassword()
         {
-            if (_isLockScreenMode)
-            {
-                return;
-            }
-
             PasswordTextBox.Text = PasswordBox.Password;
             PasswordBox.Visibility = Visibility.Collapsed;
             PasswordTextBox.Visibility = Visibility.Visible;
