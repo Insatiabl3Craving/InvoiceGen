@@ -143,7 +143,14 @@ namespace InvoiceGenerator.Services
                 _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
             }
 
-            TimeoutElapsed?.Invoke(this, EventArgs.Empty);
+            try
+            {
+                TimeoutElapsed?.Invoke(this, EventArgs.Empty);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[InactivityLockService] TimeoutElapsed handler threw: {ex}");
+            }
         }
 
         private TimeSpan GetElapsedSinceLastActivity()

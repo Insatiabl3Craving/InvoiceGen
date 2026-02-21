@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -240,7 +241,15 @@ namespace InvoiceGenerator
                 HideLockVerifyError();
                 await PlayLockFadeOutAsync();
                 HideLockOverlay();
-                UnlockSucceeded?.Invoke(this, EventArgs.Empty);
+
+                try
+                {
+                    UnlockSucceeded?.Invoke(this, EventArgs.Empty);
+                }
+                catch (Exception unlockEx)
+                {
+                    Debug.WriteLine($"[MainWindow] UnlockSucceeded handler threw: {unlockEx}");
+                }
             }
             catch (Exception ex)
             {
