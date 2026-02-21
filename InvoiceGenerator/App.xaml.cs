@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
@@ -13,6 +14,7 @@ namespace InvoiceGenerator
     public partial class App : Application
     {
         private static readonly TimeSpan InactivityTimeout = TimeSpan.FromMinutes(5);
+        private static readonly TimeSpan FallbackInactivityTimeout = TimeSpan.FromMinutes(5);
 
         private InactivityLockService? _inactivityLockService;
         private bool _isLockScreenActive;
@@ -64,7 +66,8 @@ namespace InvoiceGenerator
 
         private void InitializeInactivityLock()
         {
-            _inactivityLockService = new InactivityLockService(InactivityTimeout);
+            var effectiveTimeout = ResolveInactivityTimeout(InactivityTimeout);
+            _inactivityLockService = new InactivityLockService(effectiveTimeout);
             _inactivityLockService.TimeoutElapsed += InactivityLockService_TimeoutElapsed;
 
             InputManager.Current.PreProcessInput += Current_PreProcessInput;
@@ -72,6 +75,17 @@ namespace InvoiceGenerator
             Exit += App_Exit;
 
             _inactivityLockService.Start();
+        }
+
+        private static TimeSpan ResolveInactivityTimeout(TimeSpan configuredTimeout)
+        {
+            if (configuredTimeout > TimeSpan.Zero)
+            {
+                return configuredTimeout;
+            }
+
+            Debug.WriteLine($"Invalid inactivity timeout '{configuredTimeout}'. Falling back to '{FallbackInactivityTimeout}'.");
+            return FallbackInactivityTimeout;
         }
 
         private void App_Activated(object? sender, EventArgs e)

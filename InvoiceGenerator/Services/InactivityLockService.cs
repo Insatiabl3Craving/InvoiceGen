@@ -15,6 +15,11 @@ namespace InvoiceGenerator.Services
 
         public event EventHandler? TimeoutElapsed;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="InactivityLockService"/>.
+        /// </summary>
+        /// <param name="timeout">The maximum allowed inactivity duration before <see cref="TimeoutElapsed"/> is raised. Must be greater than <see cref="TimeSpan.Zero"/>.</param>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="timeout"/> is less than or equal to <see cref="TimeSpan.Zero"/>.</exception>
         public InactivityLockService(TimeSpan timeout)
         {
             if (timeout <= TimeSpan.Zero)
