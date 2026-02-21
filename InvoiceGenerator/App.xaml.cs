@@ -16,14 +16,10 @@ namespace InvoiceGenerator
     {
         private static readonly TimeSpan InactivityTimeout = TimeSpan.FromMinutes(5);
         private static readonly TimeSpan FallbackInactivityTimeout = TimeSpan.FromMinutes(5);
-        private static readonly TimeSpan DeferredLockRetryInterval = TimeSpan.FromMilliseconds(500);
-        private const int MaxDeferredLockAttempts = 20;
 
         private InactivityLockService? _inactivityLockService;
-        private readonly ILockPolicyEvaluator _lockPolicyEvaluator = new DefaultLockPolicyEvaluator();
+        private readonly AuthStateCoordinator _authCoordinator = new();
         private DispatcherTimer? _deferredLockTimer;
-        private int _deferredLockAttempts;
-        private bool _isShuttingDown;
         private bool _isLockScreenActive;
 
         protected override void OnStartup(StartupEventArgs e)
@@ -38,7 +34,7 @@ namespace InvoiceGenerator
                 var settingsService = new SettingsService();
                 settingsService.InitializeDatabaseAsync().GetAwaiter().GetResult();
 
-                var passwordDialog = new AppPasswordDialog();
+                var passwordDialog = new AppPasswordDialog(authCoordinator: _authCoordinator);
                 var result = passwordDialog.ShowDialog();
                 if (result != true)
                 {
@@ -51,7 +47,7 @@ namespace InvoiceGenerator
                 var startupWidth = passwordDialog.ActualWidth > 0 ? passwordDialog.ActualWidth : passwordDialog.Width;
                 var startupHeight = passwordDialog.ActualHeight > 0 ? passwordDialog.ActualHeight : passwordDialog.Height;
 
-                var mainWindow = new MainWindow();
+                var mainWindow = new MainWindow(_authCoordinator);
                 mainWindow.WindowStartupLocation = WindowStartupLocation.Manual;
                 mainWindow.Left = startupLeft;
                 mainWindow.Top = startupTop;
@@ -136,17 +132,17 @@ namespace InvoiceGenerator
         private void ProcessInactivityTimeout()
         {
             var snapshot = BuildLockStateSnapshot();
-            var decision = _lockPolicyEvaluator.Evaluate(snapshot);
+            var decision = _authCoordinator.HandleInactivityTimeout(snapshot);
 
             Debug.WriteLine($"[LockPolicy] Decision={decision}, Locked={snapshot.IsAlreadyLocked}, BlockingModal={snapshot.HasBlockingModal}, ShuttingDown={snapshot.IsShuttingDown}, SessionLocked={snapshot.SessionIsLocked}, MainReady={snapshot.MainWindowReady}, MainActive={snapshot.MainWindowActive}, Windows={snapshot.VisibleWindowCount}");
 
             switch (decision)
             {
-                case LockDecision.Allow:
+                case AuthCoordinatorTimeoutAction.ShowLock:
                     StopDeferredLockRetry();
                     ShowLockScreen();
                     break;
-                case LockDecision.Defer:
+                case AuthCoordinatorTimeoutAction.Defer:
                     ScheduleDeferredLockRetry();
                     break;
                 default:
@@ -163,6 +159,7 @@ namespace InvoiceGenerator
             }
 
             _isLockScreenActive = true;
+            _authCoordinator.MarkLockShown();
             _inactivityLockService?.PauseForLock();
 
             CloseSecondaryWindows();
@@ -189,7 +186,7 @@ namespace InvoiceGenerator
             {
                 IsAlreadyLocked = _isLockScreenActive || (mainWindow?.IsLockOverlayVisible ?? false),
                 HasBlockingModal = hasBlockingModal,
-                IsShuttingDown = _isShuttingDown,
+                IsShuttingDown = _authCoordinator.IsShuttingDown,
                 SessionIsLocked = sessionIsLocked,
                 MainWindowReady = mainWindow is not null && mainWindow.IsLoaded,
                 MainWindowActive = mainWindow?.IsActive ?? false,
@@ -199,25 +196,17 @@ namespace InvoiceGenerator
 
         private void ScheduleDeferredLockRetry()
         {
-            if (_isShuttingDown || _isLockScreenActive)
+            if (_authCoordinator.IsShuttingDown || _isLockScreenActive)
             {
                 return;
             }
-
-            if (_deferredLockAttempts >= MaxDeferredLockAttempts)
-            {
-                Debug.WriteLine($"[LockPolicy] Max deferred retries reached ({MaxDeferredLockAttempts}). Forcing lock now.");
-                StopDeferredLockRetry();
-                ShowLockScreen();
-                return;
-            }
-
-            _deferredLockAttempts++;
 
             _deferredLockTimer ??= new DispatcherTimer(DispatcherPriority.Background)
             {
-                Interval = DeferredLockRetryInterval
+                Interval = _authCoordinator.DeferredRetryInterval
             };
+
+            _deferredLockTimer.Interval = _authCoordinator.DeferredRetryInterval;
 
             _deferredLockTimer.Stop();
             _deferredLockTimer.Tick -= DeferredLockTimer_Tick;
@@ -238,13 +227,12 @@ namespace InvoiceGenerator
                 _deferredLockTimer.Stop();
                 _deferredLockTimer.Tick -= DeferredLockTimer_Tick;
             }
-
-            _deferredLockAttempts = 0;
         }
 
         private void MainWindow_UnlockSucceeded(object? sender, EventArgs e)
         {
             _isLockScreenActive = false;
+            _authCoordinator.MarkUnlocked();
             StopDeferredLockRetry();
             _inactivityLockService?.ResumeAfterUnlock();
         }
@@ -267,7 +255,7 @@ namespace InvoiceGenerator
 
         private void App_Exit(object? sender, ExitEventArgs e)
         {
-            _isShuttingDown = true;
+            _authCoordinator.MarkShuttingDown();
             StopDeferredLockRetry();
 
             if (_inactivityLockService is not null)

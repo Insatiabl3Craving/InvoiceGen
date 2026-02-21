@@ -12,7 +12,7 @@ namespace InvoiceGenerator
 {
     public partial class MainWindow : Window
     {
-        private readonly AuthService _authService = new();
+        private readonly AuthStateCoordinator _authCoordinator;
         private bool _isLocked;
         private bool _isVerifying;
 
@@ -23,8 +23,9 @@ namespace InvoiceGenerator
 
         public bool IsLockOverlayVisible => _isLocked;
 
-        public MainWindow()
+        public MainWindow(AuthStateCoordinator authCoordinator)
         {
+            _authCoordinator = authCoordinator ?? throw new ArgumentNullException(nameof(authCoordinator));
             InitializeComponent();
         }
 
@@ -214,9 +215,9 @@ namespace InvoiceGenerator
 
             try
             {
-                var result = await _authService.VerifyPasswordWithPolicyAsync(password);
+                var result = await _authCoordinator.TryUnlockAsync(password);
 
-                if (result.Status == PasswordVerificationStatus.LockedOut)
+                if (result.Status == AuthCoordinatorUnlockStatus.LockedOut)
                 {
                     ShowLockVerifyError($"Too many attempts. Try again in {FormatDuration(result.LockoutRemaining)}.");
                     ClearLockPassword();
@@ -224,18 +225,41 @@ namespace InvoiceGenerator
                     return;
                 }
 
-                if (result.Status == PasswordVerificationStatus.InvalidPassword)
+                if (result.Status == AuthCoordinatorUnlockStatus.InvalidPassword)
                 {
                     await PlayLockShakeAsync();
-                    ShowLockVerifyError("That didn't work, please try again");
+                    ShowLockVerifyError(result.Message);
                     ClearLockPassword();
                     LockPasswordBox.Focus();
                     return;
                 }
 
-                if (result.Status == PasswordVerificationStatus.PasswordNotSet)
+                if (result.Status == AuthCoordinatorUnlockStatus.EmptyPassword)
+                {
+                    await PlayLockShakeAsync();
+                    ShowLockVerifyError(result.Message);
+                    ClearLockPassword();
+                    LockPasswordBox.Focus();
+                    return;
+                }
+
+                if (result.Status == AuthCoordinatorUnlockStatus.PasswordNotSet)
                 {
                     ShowLockVerifyError("Password is not configured.");
+                    return;
+                }
+
+                if (result.Status == AuthCoordinatorUnlockStatus.Error)
+                {
+                    await PlayLockShakeAsync();
+                    ShowLockVerifyError(result.Message);
+                    return;
+                }
+
+                if (!result.IsSuccess)
+                {
+                    await PlayLockShakeAsync();
+                    ShowLockVerifyError(result.Message);
                     return;
                 }
 

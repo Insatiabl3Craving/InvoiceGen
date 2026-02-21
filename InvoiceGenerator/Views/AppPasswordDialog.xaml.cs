@@ -8,13 +8,15 @@ namespace InvoiceGenerator.Views
 {
     public partial class AppPasswordDialog : Window
     {
+        private readonly AuthStateCoordinator _authCoordinator;
         private readonly AuthService _authService = new();
         private readonly bool _isLockScreenMode;
         private bool _isSetupMode;
         private bool _isVerifying;
 
-        public AppPasswordDialog(bool isLockScreenMode = false)
+        public AppPasswordDialog(bool isLockScreenMode = false, AuthStateCoordinator? authCoordinator = null)
         {
+            _authCoordinator = authCoordinator ?? new AuthStateCoordinator();
             _isLockScreenMode = isLockScreenMode;
             InitializeComponent();
             Loaded += AppPasswordDialog_Loaded;
@@ -332,9 +334,9 @@ namespace InvoiceGenerator.Views
 
             try
             {
-                var result = await _authService.VerifyPasswordWithPolicyAsync(GetCurrentPassword());
+                var result = await _authCoordinator.TryUnlockAsync(GetCurrentPassword());
 
-                if (result.Status == PasswordVerificationStatus.LockedOut)
+                if (result.Status == AuthCoordinatorUnlockStatus.LockedOut)
                 {
                     ShowVerifyError($"Too many attempts. Try again in {FormatDuration(result.LockoutRemaining)}.");
                     ClearPasswordFields();
@@ -342,18 +344,41 @@ namespace InvoiceGenerator.Views
                     return;
                 }
 
-                if (result.Status == PasswordVerificationStatus.InvalidPassword)
+                if (result.Status == AuthCoordinatorUnlockStatus.InvalidPassword)
                 {
                     await PlayShakeAnimationAsync();
-                    ShowVerifyError("That didn't work, please try again");
+                    ShowVerifyError(result.Message);
                     ClearPasswordFields();
                     PasswordBox.Focus();
                     return;
                 }
 
-                if (result.Status == PasswordVerificationStatus.PasswordNotSet)
+                if (result.Status == AuthCoordinatorUnlockStatus.EmptyPassword)
+                {
+                    await PlayShakeAnimationAsync();
+                    ShowVerifyError(result.Message);
+                    ClearPasswordFields();
+                    PasswordBox.Focus();
+                    return;
+                }
+
+                if (result.Status == AuthCoordinatorUnlockStatus.PasswordNotSet)
                 {
                     ShowVerifyError("Password is not configured.");
+                    return;
+                }
+
+                if (result.Status == AuthCoordinatorUnlockStatus.Error)
+                {
+                    await PlayShakeAnimationAsync();
+                    ShowVerifyError(result.Message);
+                    return;
+                }
+
+                if (!result.IsSuccess)
+                {
+                    await PlayShakeAnimationAsync();
+                    ShowVerifyError(result.Message);
                     return;
                 }
 
@@ -365,7 +390,7 @@ namespace InvoiceGenerator.Views
             catch (Exception ex)
             {
                 await PlayShakeAnimationAsync();
-                MessageBox.Show($"Error verifying password: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowVerifyError($"Error verifying password: {ex.Message}");
             }
         }
 
