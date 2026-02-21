@@ -1,58 +1,133 @@
 using System;
-using System.Windows.Threading;
+using System.Diagnostics;
+using System.Threading;
 
 namespace InvoiceGenerator.Services
 {
-    public class InactivityLockService
+    public class InactivityLockService : IDisposable
     {
         private readonly TimeSpan _timeout;
-        private readonly DispatcherTimer _timer;
-        private DateTime _lastActivityUtc;
+        private readonly Timer _timer;
+        private readonly object _syncRoot = new();
+        private bool _isRunning;
+        private bool _disposed;
+        private long _lastActivityStamp;
 
         public event EventHandler? TimeoutElapsed;
 
         public InactivityLockService(TimeSpan timeout)
         {
-            _timeout = timeout;
-            _timer = new DispatcherTimer
+            if (timeout <= TimeSpan.Zero)
             {
-                Interval = TimeSpan.FromSeconds(1)
-            };
-            _timer.Tick += Timer_Tick;
+                throw new ArgumentOutOfRangeException(nameof(timeout), "Inactivity timeout must be greater than zero.");
+            }
+
+            _timeout = timeout;
+            _timer = new Timer(Timer_Tick, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+            _lastActivityStamp = Stopwatch.GetTimestamp();
         }
 
         public void Start()
         {
-            _lastActivityUtc = DateTime.UtcNow;
-            if (!_timer.IsEnabled)
+            ThrowIfDisposed();
+
+            lock (_syncRoot)
             {
-                _timer.Start();
+                _lastActivityStamp = Stopwatch.GetTimestamp();
+                _isRunning = true;
+                _timer.Change(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
             }
         }
 
         public void Stop()
         {
-            if (_timer.IsEnabled)
+            lock (_syncRoot)
             {
-                _timer.Stop();
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _isRunning = false;
+                _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
             }
         }
 
         public void RegisterActivity()
         {
-            _lastActivityUtc = DateTime.UtcNow;
+            if (_disposed)
+            {
+                return;
+            }
+
+            Interlocked.Exchange(ref _lastActivityStamp, Stopwatch.GetTimestamp());
         }
 
-        private void Timer_Tick(object? sender, EventArgs e)
+        private void Timer_Tick(object? state)
         {
-            var elapsed = DateTime.UtcNow - _lastActivityUtc;
+            if (_disposed || !_isRunning)
+            {
+                return;
+            }
+
+            var elapsed = GetElapsedSinceLastActivity();
             if (elapsed < _timeout)
             {
                 return;
             }
 
-            Stop();
+            lock (_syncRoot)
+            {
+                if (_disposed || !_isRunning)
+                {
+                    return;
+                }
+
+                _isRunning = false;
+                _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+            }
+
             TimeoutElapsed?.Invoke(this, EventArgs.Empty);
+        }
+
+        private TimeSpan GetElapsedSinceLastActivity()
+        {
+            var currentStamp = Stopwatch.GetTimestamp();
+            var lastStamp = Interlocked.Read(ref _lastActivityStamp);
+            var elapsedTicks = currentStamp - lastStamp;
+
+            if (elapsedTicks <= 0)
+            {
+                return TimeSpan.Zero;
+            }
+
+            var seconds = (double)elapsedTicks / Stopwatch.Frequency;
+            return TimeSpan.FromSeconds(seconds);
+        }
+
+        public void Dispose()
+        {
+            lock (_syncRoot)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _disposed = true;
+                _isRunning = false;
+            }
+
+            _timer.Dispose();
+            GC.SuppressFinalize(this);
+        }
+
+        private void ThrowIfDisposed()
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(InactivityLockService));
+            }
         }
     }
 }

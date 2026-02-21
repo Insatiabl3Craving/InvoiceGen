@@ -100,7 +100,13 @@ namespace InvoiceGenerator
 
         private void InactivityLockService_TimeoutElapsed(object? sender, EventArgs e)
         {
-            ShowLockScreen();
+            if (Dispatcher.CheckAccess())
+            {
+                ShowLockScreen();
+                return;
+            }
+
+            _ = Dispatcher.InvokeAsync(ShowLockScreen);
         }
 
         private void ShowLockScreen()
@@ -159,6 +165,7 @@ namespace InvoiceGenerator
             {
                 _inactivityLockService.TimeoutElapsed -= InactivityLockService_TimeoutElapsed;
                 _inactivityLockService.Stop();
+                _inactivityLockService.Dispose();
             }
 
             InputManager.Current.PreProcessInput -= Current_PreProcessInput;
