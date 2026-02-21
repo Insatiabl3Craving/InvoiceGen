@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -13,6 +12,7 @@ namespace InvoiceGenerator
     public partial class MainWindow : Window
     {
         private readonly AuthStateCoordinator _authCoordinator;
+        private readonly ISecurityLogger _logger;
         private bool _isLocked;
         private bool _isVerifying;
 
@@ -23,9 +23,10 @@ namespace InvoiceGenerator
 
         public bool IsLockOverlayVisible => _isLocked;
 
-        public MainWindow(AuthStateCoordinator authCoordinator)
+        public MainWindow(AuthStateCoordinator authCoordinator, ISecurityLogger? logger = null)
         {
             _authCoordinator = authCoordinator ?? throw new ArgumentNullException(nameof(authCoordinator));
+            _logger = logger ?? NullSecurityLogger.Instance;
             InitializeComponent();
         }
 
@@ -274,7 +275,7 @@ namespace InvoiceGenerator
                 }
                 catch (Exception unlockEx)
                 {
-                    Debug.WriteLine($"[MainWindow] UnlockSucceeded handler threw: {unlockEx}");
+                    _logger.HandlerException("UnlockSucceeded", unlockEx, _authCoordinator.CurrentLockCycleId);
                 }
             }
             catch (Exception ex)

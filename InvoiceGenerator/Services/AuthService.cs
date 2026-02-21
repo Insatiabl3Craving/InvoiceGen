@@ -32,6 +32,12 @@ namespace InvoiceGenerator.Services
         private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(5);
 
         private readonly SettingsService _settingsService = new();
+        private readonly ISecurityLogger _logger;
+
+        public AuthService(ISecurityLogger? logger = null)
+        {
+            _logger = logger ?? NullSecurityLogger.Instance;
+        }
 
         public async Task<bool> IsPasswordSetAsync()
         {
@@ -56,6 +62,7 @@ namespace InvoiceGenerator.Services
             settings.AppPasswordLockoutUntilUtc = null;
 
             await _settingsService.UpdateSettingsAsync(settings);
+            _logger.PasswordSet();
         }
 
         public async Task<bool> VerifyPasswordAsync(string password)
@@ -94,6 +101,7 @@ namespace InvoiceGenerator.Services
 
             if (settings.AppPasswordLockoutUntilUtc.HasValue && settings.AppPasswordLockoutUntilUtc.Value <= now)
             {
+                _logger.LockoutExpired(null, settings.AppPasswordFailedAttempts);
                 settings.AppPasswordFailedAttempts = 0;
                 settings.AppPasswordLastFailedUtc = null;
                 settings.AppPasswordLockoutUntilUtc = null;
@@ -136,6 +144,7 @@ namespace InvoiceGenerator.Services
             if (failedAttempts >= LockoutThreshold)
             {
                 settings.AppPasswordLockoutUntilUtc = now.Add(LockoutDuration);
+                _logger.LockoutStarted(null, failedAttempts, LockoutDuration);
             }
             else
             {

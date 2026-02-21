@@ -25,6 +25,7 @@ namespace InvoiceGenerator.Services
         private readonly ITimestampProvider _timestampProvider;
         private readonly Timer _timer;
         private readonly object _syncRoot = new();
+        private ISecurityLogger _logger;
         private bool _isRunning;
         private bool _isLocked;
         private bool _disposed;
@@ -56,8 +57,17 @@ namespace InvoiceGenerator.Services
             }
 
             _timeout = timeout;
+            _logger = NullSecurityLogger.Instance;
             _timer = new Timer(Timer_Tick, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
             _lastActivityStamp = _timestampProvider.GetTimestamp();
+        }
+
+        /// <summary>
+        /// Injects the security logger after construction. Call before <see cref="Start"/>.
+        /// </summary>
+        public void SetLogger(ISecurityLogger logger)
+        {
+            _logger = logger ?? NullSecurityLogger.Instance;
         }
 
         public void Start()
@@ -149,7 +159,7 @@ namespace InvoiceGenerator.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[InactivityLockService] TimeoutElapsed handler threw: {ex}");
+                _logger.HandlerException("TimeoutElapsed", ex);
             }
         }
 

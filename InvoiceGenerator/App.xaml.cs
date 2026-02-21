@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
@@ -17,10 +16,16 @@ namespace InvoiceGenerator
         private static readonly TimeSpan InactivityTimeout = TimeSpan.FromMinutes(5);
         private static readonly TimeSpan FallbackInactivityTimeout = TimeSpan.FromMinutes(5);
 
+        private readonly FileSecurityLogger _securityLogger = new();
         private InactivityLockService? _inactivityLockService;
-        private readonly AuthStateCoordinator _authCoordinator = new();
+        private readonly AuthStateCoordinator _authCoordinator;
         private DispatcherTimer? _deferredLockTimer;
         private bool _isLockScreenActive;
+
+        public App()
+        {
+            _authCoordinator = new AuthStateCoordinator(logger: _securityLogger);
+        }
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -34,7 +39,7 @@ namespace InvoiceGenerator
                 var settingsService = new SettingsService();
                 settingsService.InitializeDatabaseAsync().GetAwaiter().GetResult();
 
-                var passwordDialog = new AppPasswordDialog(authCoordinator: _authCoordinator);
+                var passwordDialog = new AppPasswordDialog(authCoordinator: _authCoordinator, logger: _securityLogger);
                 var result = passwordDialog.ShowDialog();
                 if (result != true)
                 {
@@ -47,7 +52,7 @@ namespace InvoiceGenerator
                 var startupWidth = passwordDialog.ActualWidth > 0 ? passwordDialog.ActualWidth : passwordDialog.Width;
                 var startupHeight = passwordDialog.ActualHeight > 0 ? passwordDialog.ActualHeight : passwordDialog.Height;
 
-                var mainWindow = new MainWindow(_authCoordinator);
+                var mainWindow = new MainWindow(_authCoordinator, _securityLogger);
                 mainWindow.WindowStartupLocation = WindowStartupLocation.Manual;
                 mainWindow.Left = startupLeft;
                 mainWindow.Top = startupTop;
@@ -71,6 +76,7 @@ namespace InvoiceGenerator
         {
             var effectiveTimeout = ResolveInactivityTimeout(InactivityTimeout);
             _inactivityLockService = new InactivityLockService(effectiveTimeout);
+            _inactivityLockService.SetLogger(_securityLogger);
             _inactivityLockService.TimeoutElapsed += InactivityLockService_TimeoutElapsed;
 
             // Subscribe to unlock event from the main window's in-place lock overlay
@@ -83,14 +89,15 @@ namespace InvoiceGenerator
             _inactivityLockService.ResumeAfterUnlock();
         }
 
-        private static TimeSpan ResolveInactivityTimeout(TimeSpan configuredTimeout)
+        private TimeSpan ResolveInactivityTimeout(TimeSpan configuredTimeout)
         {
             if (configuredTimeout > TimeSpan.Zero)
             {
                 return configuredTimeout;
             }
 
-            Debug.WriteLine($"Invalid inactivity timeout '{configuredTimeout}'. Falling back to '{FallbackInactivityTimeout}'.");
+            _securityLogger.ConfigFallback("InactivityTimeout",
+                configuredTimeout.ToString(), FallbackInactivityTimeout.ToString());
             return FallbackInactivityTimeout;
         }
 
@@ -133,8 +140,6 @@ namespace InvoiceGenerator
         {
             var snapshot = BuildLockStateSnapshot();
             var decision = _authCoordinator.HandleInactivityTimeout(snapshot);
-
-            Debug.WriteLine($"[LockPolicy] Decision={decision}, Locked={snapshot.IsAlreadyLocked}, BlockingModal={snapshot.HasBlockingModal}, ShuttingDown={snapshot.IsShuttingDown}, SessionLocked={snapshot.SessionIsLocked}, MainReady={snapshot.MainWindowReady}, MainActive={snapshot.MainWindowActive}, Windows={snapshot.VisibleWindowCount}");
 
             switch (decision)
             {
@@ -274,6 +279,8 @@ namespace InvoiceGenerator
             InputManager.Current.PreProcessInput -= Current_PreProcessInput;
             Activated -= App_Activated;
             Exit -= App_Exit;
+
+            _securityLogger.Dispose();
         }
     }
 }

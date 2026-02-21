@@ -33,6 +33,7 @@ namespace InvoiceGenerator.Services
     {
         private readonly AuthService _authService;
         private readonly ILockPolicyEvaluator _lockPolicyEvaluator;
+        private readonly ISecurityLogger _logger;
         private readonly int _maxDeferredAttempts;
         private int _deferredAttempts;
 
@@ -40,7 +41,8 @@ namespace InvoiceGenerator.Services
             ILockPolicyEvaluator? lockPolicyEvaluator = null,
             TimeSpan? deferredRetryInterval = null,
             int maxDeferredAttempts = 20,
-            AuthService? authService = null)
+            AuthService? authService = null,
+            ISecurityLogger? logger = null)
         {
             if (maxDeferredAttempts < 1)
             {
@@ -49,6 +51,7 @@ namespace InvoiceGenerator.Services
 
             _lockPolicyEvaluator = lockPolicyEvaluator ?? new DefaultLockPolicyEvaluator();
             _authService = authService ?? new AuthService();
+            _logger = logger ?? NullSecurityLogger.Instance;
             _maxDeferredAttempts = maxDeferredAttempts;
             DeferredRetryInterval = deferredRetryInterval.GetValueOrDefault(TimeSpan.FromMilliseconds(500));
 
@@ -64,10 +67,20 @@ namespace InvoiceGenerator.Services
 
         public TimeSpan DeferredRetryInterval { get; }
 
+        /// <summary>
+        /// Correlation ID for the current lock→unlock cycle. Set when a
+        /// lock is triggered, cleared when unlock succeeds.
+        /// </summary>
+        public Guid? CurrentLockCycleId { get; private set; }
+
         public AuthCoordinatorTimeoutAction HandleInactivityTimeout(AppLockStateSnapshot snapshot)
         {
             if (IsShuttingDown)
             {
+                _logger.LockPolicyDecision(CurrentLockCycleId, "Skip(ShuttingDown)",
+                    snapshot.IsAlreadyLocked, snapshot.HasBlockingModal, snapshot.IsShuttingDown,
+                    snapshot.SessionIsLocked, snapshot.MainWindowReady, snapshot.MainWindowActive,
+                    snapshot.VisibleWindowCount);
                 return AuthCoordinatorTimeoutAction.Skip;
             }
 
@@ -83,53 +96,91 @@ namespace InvoiceGenerator.Services
             };
 
             var decision = _lockPolicyEvaluator.Evaluate(state);
+            AuthCoordinatorTimeoutAction action;
             switch (decision)
             {
                 case LockDecision.Allow:
                     _deferredAttempts = 0;
-                    return state.IsAlreadyLocked ? AuthCoordinatorTimeoutAction.Skip : AuthCoordinatorTimeoutAction.ShowLock;
+                    if (state.IsAlreadyLocked)
+                    {
+                        action = AuthCoordinatorTimeoutAction.Skip;
+                    }
+                    else
+                    {
+                        CurrentLockCycleId = Guid.NewGuid();
+                        action = AuthCoordinatorTimeoutAction.ShowLock;
+                    }
+                    break;
                 case LockDecision.Defer:
                     if (state.IsAlreadyLocked)
                     {
-                        return AuthCoordinatorTimeoutAction.Skip;
+                        action = AuthCoordinatorTimeoutAction.Skip;
                     }
-
-                    _deferredAttempts++;
-                    if (_deferredAttempts >= _maxDeferredAttempts)
+                    else
                     {
-                        _deferredAttempts = 0;
-                        return AuthCoordinatorTimeoutAction.ShowLock;
+                        _deferredAttempts++;
+                        if (_deferredAttempts >= _maxDeferredAttempts)
+                        {
+                            _deferredAttempts = 0;
+                            CurrentLockCycleId = Guid.NewGuid();
+                            action = AuthCoordinatorTimeoutAction.ShowLock;
+                        }
+                        else
+                        {
+                            action = AuthCoordinatorTimeoutAction.Defer;
+                            _logger.DeferredRetryScheduled(CurrentLockCycleId, _deferredAttempts, _maxDeferredAttempts);
+                        }
                     }
-
-                    return AuthCoordinatorTimeoutAction.Defer;
+                    break;
                 default:
                     _deferredAttempts = 0;
-                    return AuthCoordinatorTimeoutAction.Skip;
+                    action = AuthCoordinatorTimeoutAction.Skip;
+                    break;
             }
+
+            _logger.LockPolicyDecision(CurrentLockCycleId, action.ToString(),
+                state.IsAlreadyLocked, state.HasBlockingModal, state.IsShuttingDown,
+                state.SessionIsLocked, state.MainWindowReady, state.MainWindowActive,
+                state.VisibleWindowCount);
+
+            if (action == AuthCoordinatorTimeoutAction.ShowLock)
+            {
+                _logger.InactivityTimeoutFired(CurrentLockCycleId!.Value, TimeSpan.Zero);
+            }
+
+            return action;
         }
 
         public void MarkLockShown()
         {
             IsLocked = true;
             _deferredAttempts = 0;
+            _logger.LockScreenShown(CurrentLockCycleId);
         }
 
         public void MarkUnlocked()
         {
+            var cycleId = CurrentLockCycleId;
             IsLocked = false;
             _deferredAttempts = 0;
+            CurrentLockCycleId = null;
+            _logger.UnlockSuccess(cycleId, Guid.Empty);
         }
 
         public void MarkShuttingDown()
         {
             IsShuttingDown = true;
             _deferredAttempts = 0;
+            _logger.AppShutdown();
         }
 
         public async Task<AuthCoordinatorUnlockResult> TryUnlockAsync(string password)
         {
+            var attemptId = Guid.NewGuid();
+
             if (string.IsNullOrWhiteSpace(password))
             {
+                _logger.UnlockFailed(CurrentLockCycleId, attemptId, "EmptyPassword", 0);
                 return new AuthCoordinatorUnlockResult
                 {
                     Status = AuthCoordinatorUnlockStatus.EmptyPassword,
@@ -137,39 +188,62 @@ namespace InvoiceGenerator.Services
                 };
             }
 
+            _logger.UnlockAttemptStarted(CurrentLockCycleId, attemptId);
+
             try
             {
                 var result = await _authService.VerifyPasswordWithPolicyAsync(password);
-                return result.Status switch
+                AuthCoordinatorUnlockResult coordResult;
+
+                switch (result.Status)
                 {
-                    PasswordVerificationStatus.Success => new AuthCoordinatorUnlockResult
-                    {
-                        Status = AuthCoordinatorUnlockStatus.Success,
-                        Message = string.Empty,
-                        LockoutRemaining = TimeSpan.Zero
-                    },
-                    PasswordVerificationStatus.LockedOut => new AuthCoordinatorUnlockResult
-                    {
-                        Status = AuthCoordinatorUnlockStatus.LockedOut,
-                        Message = "Too many attempts.",
-                        LockoutRemaining = result.LockoutRemaining
-                    },
-                    PasswordVerificationStatus.PasswordNotSet => new AuthCoordinatorUnlockResult
-                    {
-                        Status = AuthCoordinatorUnlockStatus.PasswordNotSet,
-                        Message = "Password is not configured.",
-                        LockoutRemaining = TimeSpan.Zero
-                    },
-                    _ => new AuthCoordinatorUnlockResult
-                    {
-                        Status = AuthCoordinatorUnlockStatus.InvalidPassword,
-                        Message = "That didn't work, please try again",
-                        LockoutRemaining = TimeSpan.Zero
-                    }
-                };
+                    case PasswordVerificationStatus.Success:
+                        _logger.UnlockSuccess(CurrentLockCycleId, attemptId);
+                        coordResult = new AuthCoordinatorUnlockResult
+                        {
+                            Status = AuthCoordinatorUnlockStatus.Success,
+                            Message = string.Empty,
+                            LockoutRemaining = TimeSpan.Zero
+                        };
+                        break;
+
+                    case PasswordVerificationStatus.LockedOut:
+                        _logger.LockoutActiveRejection(CurrentLockCycleId, attemptId, result.LockoutRemaining);
+                        coordResult = new AuthCoordinatorUnlockResult
+                        {
+                            Status = AuthCoordinatorUnlockStatus.LockedOut,
+                            Message = "Too many attempts.",
+                            LockoutRemaining = result.LockoutRemaining
+                        };
+                        break;
+
+                    case PasswordVerificationStatus.PasswordNotSet:
+                        _logger.UnlockFailed(CurrentLockCycleId, attemptId, "PasswordNotSet", 0);
+                        coordResult = new AuthCoordinatorUnlockResult
+                        {
+                            Status = AuthCoordinatorUnlockStatus.PasswordNotSet,
+                            Message = "Password is not configured.",
+                            LockoutRemaining = TimeSpan.Zero
+                        };
+                        break;
+
+                    default:
+                        _logger.UnlockFailed(CurrentLockCycleId, attemptId,
+                            "InvalidPassword", result.FailedAttempts);
+                        coordResult = new AuthCoordinatorUnlockResult
+                        {
+                            Status = AuthCoordinatorUnlockStatus.InvalidPassword,
+                            Message = "That didn't work, please try again",
+                            LockoutRemaining = TimeSpan.Zero
+                        };
+                        break;
+                }
+
+                return coordResult;
             }
             catch (Exception ex)
             {
+                _logger.HandlerException("TryUnlockAsync", ex, CurrentLockCycleId);
                 return new AuthCoordinatorUnlockResult
                 {
                     Status = AuthCoordinatorUnlockStatus.Error,

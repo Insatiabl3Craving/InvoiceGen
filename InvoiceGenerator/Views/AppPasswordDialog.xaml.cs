@@ -9,14 +9,16 @@ namespace InvoiceGenerator.Views
     public partial class AppPasswordDialog : Window
     {
         private readonly AuthStateCoordinator _authCoordinator;
+        private readonly ISecurityLogger _logger;
         private readonly AuthService _authService = new();
         private readonly bool _isLockScreenMode;
         private bool _isSetupMode;
         private bool _isVerifying;
 
-        public AppPasswordDialog(bool isLockScreenMode = false, AuthStateCoordinator? authCoordinator = null)
+        public AppPasswordDialog(bool isLockScreenMode = false, AuthStateCoordinator? authCoordinator = null, ISecurityLogger? logger = null)
         {
             _authCoordinator = authCoordinator ?? new AuthStateCoordinator();
+            _logger = logger ?? NullSecurityLogger.Instance;
             _isLockScreenMode = isLockScreenMode;
             InitializeComponent();
             Loaded += AppPasswordDialog_Loaded;
@@ -310,6 +312,7 @@ namespace InvoiceGenerator.Views
             try
             {
                 await _authService.SetPasswordAsync(password);
+                _logger.AppStartupAuth("setup", true);
                 await PlayUnlockTransitionAsync();
                 DialogResult = true;
                 Close();
@@ -383,6 +386,7 @@ namespace InvoiceGenerator.Views
                 }
 
                 HideVerifyError();
+                _logger.AppStartupAuth("verify", true);
                 await PlayUnlockTransitionAsync();
                 DialogResult = true;
                 Close();
