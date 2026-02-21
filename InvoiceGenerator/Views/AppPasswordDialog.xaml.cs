@@ -11,6 +11,7 @@ namespace InvoiceGenerator.Views
         private readonly AuthService _authService = new();
         private readonly bool _isLockScreenMode;
         private bool _isSetupMode;
+        private bool _isVerifying;
 
         public AppPasswordDialog(bool isLockScreenMode = false)
         {
@@ -200,48 +201,26 @@ namespace InvoiceGenerator.Views
             await Task.Delay(600); // Wait for animation to complete
         }
 
-        /// <summary>
-        /// Play the curtain animation for successful unlock
-        /// </summary>
-        private async Task PlayCurtainAnimationAsync()
+        private async Task PlayUnlockTransitionAsync()
         {
-            var halfWidth = Math.Max(ActualWidth / 2d, 1d);
-            var windowHeight = Math.Max(ActualHeight, 1d);
+            var storyboard = ((Storyboard)Resources["UnlockTransitionStoryboard"]).Clone();
+            var completionSource = new TaskCompletionSource<bool>();
 
-            LeftCurtain.Width = halfWidth;
-            RightCurtain.Width = halfWidth;
-            LeftCurtain.Height = windowHeight;
-            RightCurtain.Height = windowHeight;
-
-            CurtainCanvas.Visibility = Visibility.Visible;
-            CurtainCanvas.Opacity = 1;
-            System.Windows.Controls.Canvas.SetLeft(LeftCurtain, 0);
-            System.Windows.Controls.Canvas.SetLeft(RightCurtain, halfWidth);
-
-            var storyboard = (Storyboard)Resources["CurtainStoryboard"];
-
-            foreach (var timeline in storyboard.Children)
+            void OnCompleted(object? sender, EventArgs args)
             {
-                if (timeline is not DoubleAnimation animation)
-                {
-                    continue;
-                }
-
-                var targetName = Storyboard.GetTargetName(animation);
-                if (string.Equals(targetName, "LeftCurtain", StringComparison.Ordinal))
-                {
-                    animation.To = -halfWidth - 40;
-                }
-                else if (string.Equals(targetName, "RightCurtain", StringComparison.Ordinal))
-                {
-                    animation.To = ActualWidth + 40;
-                }
+                storyboard.Completed -= OnCompleted;
+                completionSource.TrySetResult(true);
             }
 
-            storyboard.Begin();
-            await Task.Delay(800); // Wait for animation to complete
+            storyboard.Completed += OnCompleted;
+            storyboard.Begin(this, true);
+            await completionSource.Task;
+        }
 
-            CurtainCanvas.Visibility = Visibility.Collapsed;
+        private void SetSubmittingState(bool isSubmitting)
+        {
+            _isVerifying = isSubmitting;
+            InlineSubmitBtn.IsEnabled = !isSubmitting;
         }
 
         /// <summary>
@@ -270,15 +249,28 @@ namespace InvoiceGenerator.Views
 
         private async void ContinueBtn_Click(object sender, RoutedEventArgs e)
         {
-            HideVerifyError();
-
-            if (_isSetupMode)
+            if (_isVerifying)
             {
-                await HandleSetupAsync();
                 return;
             }
 
-            await HandleVerifyAsync();
+            HideVerifyError();
+            SetSubmittingState(true);
+
+            try
+            {
+                if (_isSetupMode)
+                {
+                    await HandleSetupAsync();
+                    return;
+                }
+
+                await HandleVerifyAsync();
+            }
+            finally
+            {
+                SetSubmittingState(false);
+            }
         }
 
         private async Task HandleSetupAsync()
@@ -316,7 +308,7 @@ namespace InvoiceGenerator.Views
             try
             {
                 await _authService.SetPasswordAsync(password);
-                await PlayCurtainAnimationAsync();
+                await PlayUnlockTransitionAsync();
                 DialogResult = true;
                 Close();
             }
@@ -366,7 +358,7 @@ namespace InvoiceGenerator.Views
                 }
 
                 HideVerifyError();
-                await PlayCurtainAnimationAsync();
+                await PlayUnlockTransitionAsync();
                 DialogResult = true;
                 Close();
             }
