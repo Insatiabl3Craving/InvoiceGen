@@ -4,9 +4,25 @@ using System.Threading;
 
 namespace InvoiceGenerator.Services
 {
+    internal interface ITimestampProvider
+    {
+        long GetTimestamp();
+        long Frequency { get; }
+    }
+
+    internal sealed class StopwatchTimestampProvider : ITimestampProvider
+    {
+        public static StopwatchTimestampProvider Instance { get; } = new();
+
+        public long GetTimestamp() => Stopwatch.GetTimestamp();
+
+        public long Frequency => Stopwatch.Frequency;
+    }
+
     public class InactivityLockService : IDisposable
     {
         private readonly TimeSpan _timeout;
+        private readonly ITimestampProvider _timestampProvider;
         private readonly Timer _timer;
         private readonly object _syncRoot = new();
         private bool _isRunning;
@@ -21,15 +37,26 @@ namespace InvoiceGenerator.Services
         /// <param name="timeout">The maximum allowed inactivity duration before <see cref="TimeoutElapsed"/> is raised. Must be greater than <see cref="TimeSpan.Zero"/>.</param>
         /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="timeout"/> is less than or equal to <see cref="TimeSpan.Zero"/>.</exception>
         public InactivityLockService(TimeSpan timeout)
+            : this(timeout, StopwatchTimestampProvider.Instance)
+        {
+        }
+
+        internal InactivityLockService(TimeSpan timeout, ITimestampProvider timestampProvider)
         {
             if (timeout <= TimeSpan.Zero)
             {
                 throw new ArgumentOutOfRangeException(nameof(timeout), "Inactivity timeout must be greater than zero.");
             }
 
+            _timestampProvider = timestampProvider ?? throw new ArgumentNullException(nameof(timestampProvider));
+            if (_timestampProvider.Frequency <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(timestampProvider), "Timestamp frequency must be greater than zero.");
+            }
+
             _timeout = timeout;
             _timer = new Timer(Timer_Tick, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
-            _lastActivityStamp = Stopwatch.GetTimestamp();
+            _lastActivityStamp = _timestampProvider.GetTimestamp();
         }
 
         public void Start()
@@ -38,7 +65,7 @@ namespace InvoiceGenerator.Services
 
             lock (_syncRoot)
             {
-                Interlocked.Exchange(ref _lastActivityStamp, Stopwatch.GetTimestamp());
+                Interlocked.Exchange(ref _lastActivityStamp, _timestampProvider.GetTimestamp());
                 Volatile.Write(ref _isRunning, true);
                 _timer.Change(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
             }
@@ -65,7 +92,7 @@ namespace InvoiceGenerator.Services
                 return;
             }
 
-            Interlocked.Exchange(ref _lastActivityStamp, Stopwatch.GetTimestamp());
+            Interlocked.Exchange(ref _lastActivityStamp, _timestampProvider.GetTimestamp());
         }
 
         private void Timer_Tick(object? state)
@@ -97,7 +124,7 @@ namespace InvoiceGenerator.Services
 
         private TimeSpan GetElapsedSinceLastActivity()
         {
-            var currentStamp = Stopwatch.GetTimestamp();
+            var currentStamp = _timestampProvider.GetTimestamp();
             var lastStamp = Interlocked.Read(ref _lastActivityStamp);
             var elapsedTicks = currentStamp - lastStamp;
 
@@ -106,7 +133,7 @@ namespace InvoiceGenerator.Services
                 return TimeSpan.Zero;
             }
 
-            var seconds = (double)elapsedTicks / Stopwatch.Frequency;
+            var seconds = (double)elapsedTicks / _timestampProvider.Frequency;
             return TimeSpan.FromSeconds(seconds);
         }
 
