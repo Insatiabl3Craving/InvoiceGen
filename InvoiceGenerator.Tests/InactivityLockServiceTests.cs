@@ -62,6 +62,53 @@ public class InactivityLockServiceTests
         Assert.True(timeoutRaised);
     }
 
+    [Fact]
+    public void Timeout_IsSingleShotUntilExplicitResume()
+    {
+        var timestampProvider = new FakeTimestampProvider();
+        using var service = new InactivityLockService(TimeSpan.FromSeconds(5), timestampProvider);
+
+        var timeoutCount = 0;
+        service.TimeoutElapsed += (_, _) => timeoutCount++;
+
+        service.Start();
+
+        timestampProvider.AdvanceSeconds(5.1);
+        InvokeTimerTick(service);
+        Assert.Equal(1, timeoutCount);
+
+        timestampProvider.AdvanceSeconds(10);
+        InvokeTimerTick(service);
+        Assert.Equal(1, timeoutCount);
+
+        service.ResumeAfterUnlock();
+        timestampProvider.AdvanceSeconds(5.1);
+        InvokeTimerTick(service);
+        Assert.Equal(2, timeoutCount);
+    }
+
+    [Fact]
+    public void PauseForLock_PreventsTimeoutUntilResumeAfterUnlock()
+    {
+        var timestampProvider = new FakeTimestampProvider();
+        using var service = new InactivityLockService(TimeSpan.FromSeconds(5), timestampProvider);
+
+        var timeoutCount = 0;
+        service.TimeoutElapsed += (_, _) => timeoutCount++;
+
+        service.Start();
+        service.PauseForLock();
+
+        timestampProvider.AdvanceSeconds(10);
+        InvokeTimerTick(service);
+        Assert.Equal(0, timeoutCount);
+
+        service.ResumeAfterUnlock();
+        timestampProvider.AdvanceSeconds(5.1);
+        InvokeTimerTick(service);
+        Assert.Equal(1, timeoutCount);
+    }
+
     private static void InvokeTimerTick(InactivityLockService service)
     {
         var tickMethod = typeof(InactivityLockService).GetMethod("Timer_Tick", BindingFlags.Instance | BindingFlags.NonPublic);

@@ -26,6 +26,7 @@ namespace InvoiceGenerator.Services
         private readonly Timer _timer;
         private readonly object _syncRoot = new();
         private bool _isRunning;
+        private bool _isLocked;
         private bool _disposed;
         private long _lastActivityStamp;
 
@@ -61,13 +62,34 @@ namespace InvoiceGenerator.Services
 
         public void Start()
         {
+            ResumeAfterUnlock();
+        }
+
+        public void ResumeAfterUnlock()
+        {
             ThrowIfDisposed();
 
             lock (_syncRoot)
             {
                 Interlocked.Exchange(ref _lastActivityStamp, _timestampProvider.GetTimestamp());
+                Volatile.Write(ref _isLocked, false);
                 Volatile.Write(ref _isRunning, true);
                 _timer.Change(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+            }
+        }
+
+        public void PauseForLock()
+        {
+            lock (_syncRoot)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                Volatile.Write(ref _isLocked, true);
+                Volatile.Write(ref _isRunning, false);
+                _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
             }
         }
 
@@ -80,6 +102,7 @@ namespace InvoiceGenerator.Services
                     return;
                 }
 
+                Volatile.Write(ref _isLocked, false);
                 Volatile.Write(ref _isRunning, false);
                 _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
             }
@@ -87,7 +110,7 @@ namespace InvoiceGenerator.Services
 
         public void RegisterActivity()
         {
-            if (Volatile.Read(ref _disposed))
+            if (Volatile.Read(ref _disposed) || Volatile.Read(ref _isLocked))
             {
                 return;
             }
@@ -115,6 +138,7 @@ namespace InvoiceGenerator.Services
                     return;
                 }
 
+                Volatile.Write(ref _isLocked, true);
                 Volatile.Write(ref _isRunning, false);
                 _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
             }
@@ -158,6 +182,7 @@ namespace InvoiceGenerator.Services
                 }
 
                 Volatile.Write(ref _disposed, true);
+                Volatile.Write(ref _isLocked, false);
                 Volatile.Write(ref _isRunning, false);
                 _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
                 TimeoutElapsed = null;

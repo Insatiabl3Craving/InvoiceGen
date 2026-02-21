@@ -74,7 +74,7 @@ namespace InvoiceGenerator
             Activated += App_Activated;
             Exit += App_Exit;
 
-            _inactivityLockService.Start();
+            _inactivityLockService.ResumeAfterUnlock();
         }
 
         private static TimeSpan ResolveInactivityTimeout(TimeSpan configuredTimeout)
@@ -131,6 +131,7 @@ namespace InvoiceGenerator
             }
 
             _isLockScreenActive = true;
+            _inactivityLockService?.PauseForLock();
 
             try
             {
@@ -149,7 +150,7 @@ namespace InvoiceGenerator
                     return;
                 }
 
-                _inactivityLockService?.Start();
+                _inactivityLockService?.ResumeAfterUnlock();
             }
             finally
             {
