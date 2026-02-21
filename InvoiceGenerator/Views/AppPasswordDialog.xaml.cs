@@ -289,7 +289,7 @@ namespace InvoiceGenerator.Views
             if (string.IsNullOrWhiteSpace(password))
             {
                 await PlayShakeAnimationAsync();
-                MessageBox.Show("Password is required.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                ShowVerifyError("Please enter a password.");
                 ClearPasswordFields();
                 PasswordBox.Focus();
                 return;
@@ -298,7 +298,7 @@ namespace InvoiceGenerator.Views
             if (password.Length < 8)
             {
                 await PlayShakeAnimationAsync();
-                MessageBox.Show("Password must be at least 8 characters.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                ShowVerifyError("Password must be at least 8 characters.");
                 ClearPasswordFields();
                 PasswordBox.Focus();
                 return;
@@ -307,7 +307,7 @@ namespace InvoiceGenerator.Views
             if (!string.Equals(password, confirm, StringComparison.Ordinal))
             {
                 await PlayShakeAnimationAsync();
-                MessageBox.Show("Passwords do not match.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                ShowVerifyError("Passwords do not match.");
                 ClearPasswordFields();
                 PasswordBox.Focus();
                 return;
@@ -332,7 +332,7 @@ namespace InvoiceGenerator.Views
             if (string.IsNullOrWhiteSpace(GetCurrentPassword()))
             {
                 await PlayShakeAnimationAsync();
-                MessageBox.Show("Password is required.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                ShowVerifyError("Please enter your password.");
                 ClearPasswordFields();
                 PasswordBox.Focus();
                 return;
