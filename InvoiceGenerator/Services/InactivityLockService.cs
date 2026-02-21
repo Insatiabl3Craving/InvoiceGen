@@ -33,8 +33,8 @@ namespace InvoiceGenerator.Services
 
             lock (_syncRoot)
             {
-                _lastActivityStamp = Stopwatch.GetTimestamp();
-                _isRunning = true;
+                Interlocked.Exchange(ref _lastActivityStamp, Stopwatch.GetTimestamp());
+                Volatile.Write(ref _isRunning, true);
                 _timer.Change(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
             }
         }
@@ -48,14 +48,14 @@ namespace InvoiceGenerator.Services
                     return;
                 }
 
-                _isRunning = false;
+                Volatile.Write(ref _isRunning, false);
                 _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
             }
         }
 
         public void RegisterActivity()
         {
-            if (_disposed)
+            if (Volatile.Read(ref _disposed))
             {
                 return;
             }
@@ -65,7 +65,7 @@ namespace InvoiceGenerator.Services
 
         private void Timer_Tick(object? state)
         {
-            if (_disposed || !_isRunning)
+            if (Volatile.Read(ref _disposed) || !Volatile.Read(ref _isRunning))
             {
                 return;
             }
@@ -78,12 +78,12 @@ namespace InvoiceGenerator.Services
 
             lock (_syncRoot)
             {
-                if (_disposed || !_isRunning)
+                if (Volatile.Read(ref _disposed) || !Volatile.Read(ref _isRunning))
                 {
                     return;
                 }
 
-                _isRunning = false;
+                Volatile.Write(ref _isRunning, false);
                 _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
             }
 
@@ -114,8 +114,8 @@ namespace InvoiceGenerator.Services
                     return;
                 }
 
-                _disposed = true;
-                _isRunning = false;
+                Volatile.Write(ref _disposed, true);
+                Volatile.Write(ref _isRunning, false);
             }
 
             _timer.Dispose();
@@ -124,7 +124,7 @@ namespace InvoiceGenerator.Services
 
         private void ThrowIfDisposed()
         {
-            if (_disposed)
+            if (Volatile.Read(ref _disposed))
             {
                 throw new ObjectDisposedException(nameof(InactivityLockService));
             }
