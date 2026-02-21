@@ -107,6 +107,17 @@ namespace InvoiceGenerator.Services
 
         public void Dispose()
         {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposing)
+            {
+                return;
+            }
+
             lock (_syncRoot)
             {
                 if (_disposed)
@@ -116,10 +127,11 @@ namespace InvoiceGenerator.Services
 
                 Volatile.Write(ref _disposed, true);
                 Volatile.Write(ref _isRunning, false);
+                _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+                TimeoutElapsed = null;
             }
 
             _timer.Dispose();
-            GC.SuppressFinalize(this);
         }
 
         private void ThrowIfDisposed()

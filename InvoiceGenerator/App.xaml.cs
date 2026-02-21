@@ -166,6 +166,7 @@ namespace InvoiceGenerator
                 _inactivityLockService.TimeoutElapsed -= InactivityLockService_TimeoutElapsed;
                 _inactivityLockService.Stop();
                 _inactivityLockService.Dispose();
+                _inactivityLockService = null;
             }
 
             InputManager.Current.PreProcessInput -= Current_PreProcessInput;
