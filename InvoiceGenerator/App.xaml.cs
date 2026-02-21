@@ -70,6 +70,9 @@ namespace InvoiceGenerator
             _inactivityLockService = new InactivityLockService(effectiveTimeout);
             _inactivityLockService.TimeoutElapsed += InactivityLockService_TimeoutElapsed;
 
+            // Subscribe to unlock event from the main window's in-place lock overlay
+            ((MainWindow)MainWindow).UnlockSucceeded += MainWindow_UnlockSucceeded;
+
             InputManager.Current.PreProcessInput += Current_PreProcessInput;
             Activated += App_Activated;
             Exit += App_Exit;
@@ -125,7 +128,7 @@ namespace InvoiceGenerator
 
         private void ShowLockScreen()
         {
-            if (_isLockScreenActive || MainWindow is null)
+            if (_isLockScreenActive || MainWindow is not MainWindow mainWindow)
             {
                 return;
             }
@@ -133,29 +136,16 @@ namespace InvoiceGenerator
             _isLockScreenActive = true;
             _inactivityLockService?.PauseForLock();
 
-            try
-            {
-                CloseSecondaryWindows();
+            CloseSecondaryWindows();
 
-                var lockDialog = new AppPasswordDialog(isLockScreenMode: true)
-                {
-                    Owner = MainWindow,
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner
-                };
+            // Show the in-window lock overlay instead of a separate dialog
+            mainWindow.ShowLockOverlay();
+        }
 
-                var result = lockDialog.ShowDialog();
-                if (result != true)
-                {
-                    Shutdown();
-                    return;
-                }
-
-                _inactivityLockService?.ResumeAfterUnlock();
-            }
-            finally
-            {
-                _isLockScreenActive = false;
-            }
+        private void MainWindow_UnlockSucceeded(object? sender, EventArgs e)
+        {
+            _isLockScreenActive = false;
+            _inactivityLockService?.ResumeAfterUnlock();
         }
 
         private void CloseSecondaryWindows()
@@ -182,6 +172,11 @@ namespace InvoiceGenerator
                 _inactivityLockService.Stop();
                 _inactivityLockService.Dispose();
                 _inactivityLockService = null;
+            }
+
+            if (MainWindow is MainWindow mainWindow)
+            {
+                mainWindow.UnlockSucceeded -= MainWindow_UnlockSucceeded;
             }
 
             InputManager.Current.PreProcessInput -= Current_PreProcessInput;

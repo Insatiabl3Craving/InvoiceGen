@@ -5,19 +5,227 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:InvoiceGenerator"
         mc:Ignorable="d"
-        Title="Invoice Generator" Height="800" Width="1200" WindowStartupLocation="CenterScreen">
+        Title="Invoice Generator" Height="800" Width="1200" WindowStartupLocation="CenterScreen"
+        Background="#FAFAFA">
+
+    <Window.Resources>
+        <!-- Shake animation for incorrect password -->
+        <Storyboard x:Key="LockShakeStoryboard" Duration="0:0:0.6">
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="LockPasswordContainer"
+                                           Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)">
+                <EasingDoubleKeyFrame KeyTime="0:0:0" Value="0"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.05" Value="-12"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.1" Value="12"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.15" Value="-12"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.2" Value="12"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.25" Value="-9"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.3" Value="9"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.35" Value="-6"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.4" Value="6"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.45" Value="-4"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.5" Value="4"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.55" Value="-2"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.6" Value="0"/>
+            </DoubleAnimationUsingKeyFrames>
+        </Storyboard>
+
+        <!-- Fade-out for unlock transition -->
+        <Storyboard x:Key="LockFadeOutStoryboard" Duration="0:0:0.28">
+            <DoubleAnimation Storyboard.TargetName="LockOverlay"
+                             Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.28">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+
+        <!-- Password box style -->
+        <Style x:Key="LockPasswordBoxStyle" TargetType="PasswordBox">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#1A1A1A"/>
+            <Setter Property="BorderBrush" Value="#D3D3D3"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Background="{TemplateBinding Background}"
+                                SnapsToDevicePixels="True" CornerRadius="4">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
+                                          HorizontalScrollBarVisibility="Hidden"
+                                          VerticalScrollBarVisibility="Hidden"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter Property="BorderBrush" TargetName="border" Value="#007ACC"/>
+                                <Setter Property="BorderThickness" TargetName="border" Value="2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Text box style (for reveal mode) -->
+        <Style x:Key="LockTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#1A1A1A"/>
+            <Setter Property="BorderBrush" Value="#D3D3D3"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Background="{TemplateBinding Background}"
+                                SnapsToDevicePixels="True" CornerRadius="4">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
+                                          HorizontalScrollBarVisibility="Hidden"
+                                          VerticalScrollBarVisibility="Hidden"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter Property="BorderBrush" TargetName="border" Value="#007ACC"/>
+                                <Setter Property="BorderThickness" TargetName="border" Value="2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Eye / submit button style -->
+        <Style x:Key="LockEyeButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="42"/>
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="#666"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="#007ACC"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Foreground" Value="#007ACC"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
     <Grid>
-        <StackPanel Orientation="Horizontal">
+        <!-- Layer 0: Main application content -->
+        <StackPanel x:Name="MainContent" Orientation="Horizontal">
             <Border Width="200" Background="#F0F0F0" Padding="10">
                 <StackPanel>
                     <TextBlock Text="Navigation" FontSize="16" FontWeight="Bold" Margin="0,0,0,20"/>
-                <Button Name="ClientManagerBtn" Content="Client Manager" Padding="10" Margin="0,5" Click="ClientManagerBtn_Click"/>
-                <Button Name="InvoiceBuilderBtn" Content="Invoice Builder" Padding="10" Margin="0,5" Click="InvoiceBuilderBtn_Click"/>
-                <Button Name="HistoryBtn" Content="Invoice History" Padding="10" Margin="0,5" Click="HistoryBtn_Click"/>
-                <Button Name="SettingsBtn" Content="Settings" Padding="10" Margin="0,5" Click="SettingsBtn_Click"/>
+                    <Button Name="ClientManagerBtn" Content="Client Manager" Padding="10" Margin="0,5" Click="ClientManagerBtn_Click"/>
+                    <Button Name="InvoiceBuilderBtn" Content="Invoice Builder" Padding="10" Margin="0,5" Click="InvoiceBuilderBtn_Click"/>
+                    <Button Name="HistoryBtn" Content="Invoice History" Padding="10" Margin="0,5" Click="HistoryBtn_Click"/>
+                    <Button Name="SettingsBtn" Content="Settings" Padding="10" Margin="0,5" Click="SettingsBtn_Click"/>
                 </StackPanel>
             </Border>
             <ContentControl Name="ContentArea" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10"/>
         </StackPanel>
+
+        <!-- Layer 1: Lock overlay (rendered on top, collapsed when unlocked) -->
+        <Grid x:Name="LockOverlay" Visibility="Collapsed" Background="#FAFAFA"
+              KeyboardNavigation.TabNavigation="Cycle"
+              FocusManager.IsFocusScope="True">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="1" MaxWidth="360" MinWidth="300" HorizontalAlignment="Center">
+                <!-- Lock icon and title -->
+                <TextBlock Text="🔒" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                <TextBlock Text="Session Locked" FontSize="18" FontWeight="SemiBold" Foreground="#1A1A1A"
+                           HorizontalAlignment="Center" Margin="0,0,0,24"/>
+
+                <!-- Password input row -->
+                <Grid x:Name="LockPasswordContainer" Margin="0,0,0,16">
+                    <Grid.RenderTransform>
+                        <TranslateTransform X="0"/>
+                    </Grid.RenderTransform>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <PasswordBox x:Name="LockPasswordBox" Grid.Column="0"
+                                 Style="{StaticResource LockPasswordBoxStyle}"
+                                 PasswordChanged="LockPasswordInput_Changed"
+                                 GotFocus="LockPasswordInput_FocusChanged"
+                                 LostFocus="LockPasswordInput_FocusChanged"
+                                 TabIndex="0"/>
+
+                    <TextBox x:Name="LockPasswordTextBox" Grid.Column="0"
+                             Style="{StaticResource LockTextBoxStyle}"
+                             Visibility="Collapsed"
+                             TextChanged="LockPasswordInput_Changed"
+                             GotFocus="LockPasswordInput_FocusChanged"
+                             LostFocus="LockPasswordInput_FocusChanged"
+                             TabIndex="0"/>
+
+                    <TextBlock x:Name="LockPasswordPlaceholder" Grid.Column="0"
+                               Margin="14,0,0,0" VerticalAlignment="Center"
+                               Foreground="#8A8A8A" FontSize="14"
+                               IsHitTestVisible="False" Text="Enter your password"/>
+
+                    <Button x:Name="LockToggleVisibility" Grid.Column="1"
+                            Style="{StaticResource LockEyeButtonStyle}" Content="👁"
+                            PreviewMouseLeftButtonDown="LockRevealPassword_Down"
+                            PreviewMouseLeftButtonUp="LockRevealPassword_Up"
+                            MouseLeave="LockRevealPassword_Leave"
+                            LostMouseCapture="LockRevealPassword_LostCapture"
+                            PreviewTouchDown="LockRevealPassword_TouchDown"
+                            PreviewTouchUp="LockRevealPassword_TouchUp"
+                            IsTabStop="False"
+                            ToolTip="Press and hold to reveal password"/>
+
+                    <Button x:Name="LockSubmitBtn" Grid.Column="2"
+                            Style="{StaticResource LockEyeButtonStyle}" Content="➜"
+                            Click="LockSubmitBtn_Click"
+                            TabIndex="1"
+                            ToolTip="Unlock"/>
+                </Grid>
+
+                <!-- Inline error text -->
+                <TextBlock x:Name="LockVerifyErrorText" Visibility="Collapsed"
+                           Foreground="#A4262C" FontSize="12"
+                           Margin="0,-10,0,12" TextWrapping="Wrap"/>
+
+                <!-- Hint -->
+                <TextBlock Foreground="#666" FontSize="12" Margin="0,0,0,24"
+                           Text="Session locked after inactivity. Enter your password to continue."
+                           HorizontalAlignment="Center" TextAlignment="Center"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>
