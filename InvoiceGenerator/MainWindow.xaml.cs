@@ -21,6 +21,8 @@ namespace InvoiceGenerator
         /// </summary>
         public event EventHandler? UnlockSucceeded;
 
+        public bool IsLockOverlayVisible => _isLocked;
+
         public MainWindow()
         {
             InitializeComponent();

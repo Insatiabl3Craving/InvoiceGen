@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using InvoiceGenerator.Services;
 using InvoiceGenerator.Views;
 
@@ -15,8 +16,14 @@ namespace InvoiceGenerator
     {
         private static readonly TimeSpan InactivityTimeout = TimeSpan.FromMinutes(5);
         private static readonly TimeSpan FallbackInactivityTimeout = TimeSpan.FromMinutes(5);
+        private static readonly TimeSpan DeferredLockRetryInterval = TimeSpan.FromMilliseconds(500);
+        private const int MaxDeferredLockAttempts = 20;
 
         private InactivityLockService? _inactivityLockService;
+        private readonly ILockPolicyEvaluator _lockPolicyEvaluator = new DefaultLockPolicyEvaluator();
+        private DispatcherTimer? _deferredLockTimer;
+        private int _deferredLockAttempts;
+        private bool _isShuttingDown;
         private bool _isLockScreenActive;
 
         protected override void OnStartup(StartupEventArgs e)
@@ -119,11 +126,33 @@ namespace InvoiceGenerator
         {
             if (Dispatcher.CheckAccess())
             {
-                ShowLockScreen();
+                ProcessInactivityTimeout();
                 return;
             }
 
-            _ = Dispatcher.InvokeAsync(ShowLockScreen);
+            _ = Dispatcher.InvokeAsync(ProcessInactivityTimeout);
+        }
+
+        private void ProcessInactivityTimeout()
+        {
+            var snapshot = BuildLockStateSnapshot();
+            var decision = _lockPolicyEvaluator.Evaluate(snapshot);
+
+            Debug.WriteLine($"[LockPolicy] Decision={decision}, Locked={snapshot.IsAlreadyLocked}, BlockingModal={snapshot.HasBlockingModal}, ShuttingDown={snapshot.IsShuttingDown}, SessionLocked={snapshot.SessionIsLocked}, MainReady={snapshot.MainWindowReady}, MainActive={snapshot.MainWindowActive}, Windows={snapshot.VisibleWindowCount}");
+
+            switch (decision)
+            {
+                case LockDecision.Allow:
+                    StopDeferredLockRetry();
+                    ShowLockScreen();
+                    break;
+                case LockDecision.Defer:
+                    ScheduleDeferredLockRetry();
+                    break;
+                default:
+                    StopDeferredLockRetry();
+                    break;
+            }
         }
 
         private void ShowLockScreen()
@@ -142,9 +171,81 @@ namespace InvoiceGenerator
             mainWindow.ShowLockOverlay();
         }
 
+        private AppLockStateSnapshot BuildLockStateSnapshot()
+        {
+            var windows = Current.Windows.OfType<Window>().ToList();
+            var visibleWindows = windows.Count(window => window.IsVisible);
+            var mainWindow = MainWindow as MainWindow;
+            var hasBlockingModal = windows.Any(window =>
+                !ReferenceEquals(window, MainWindow)
+                && window.IsVisible
+                && window.Owner is not null);
+
+            var sessionIsLocked = MainWindow is null
+                || !MainWindow.IsVisible
+                || MainWindow.WindowState == WindowState.Minimized;
+
+            return new AppLockStateSnapshot
+            {
+                IsAlreadyLocked = _isLockScreenActive || (mainWindow?.IsLockOverlayVisible ?? false),
+                HasBlockingModal = hasBlockingModal,
+                IsShuttingDown = _isShuttingDown,
+                SessionIsLocked = sessionIsLocked,
+                MainWindowReady = mainWindow is not null && mainWindow.IsLoaded,
+                MainWindowActive = mainWindow?.IsActive ?? false,
+                VisibleWindowCount = visibleWindows
+            };
+        }
+
+        private void ScheduleDeferredLockRetry()
+        {
+            if (_isShuttingDown || _isLockScreenActive)
+            {
+                return;
+            }
+
+            if (_deferredLockAttempts >= MaxDeferredLockAttempts)
+            {
+                Debug.WriteLine($"[LockPolicy] Max deferred retries reached ({MaxDeferredLockAttempts}). Forcing lock now.");
+                StopDeferredLockRetry();
+                ShowLockScreen();
+                return;
+            }
+
+            _deferredLockAttempts++;
+
+            _deferredLockTimer ??= new DispatcherTimer(DispatcherPriority.Background)
+            {
+                Interval = DeferredLockRetryInterval
+            };
+
+            _deferredLockTimer.Stop();
+            _deferredLockTimer.Tick -= DeferredLockTimer_Tick;
+            _deferredLockTimer.Tick += DeferredLockTimer_Tick;
+            _deferredLockTimer.Start();
+        }
+
+        private void DeferredLockTimer_Tick(object? sender, EventArgs e)
+        {
+            _deferredLockTimer?.Stop();
+            ProcessInactivityTimeout();
+        }
+
+        private void StopDeferredLockRetry()
+        {
+            if (_deferredLockTimer is not null)
+            {
+                _deferredLockTimer.Stop();
+                _deferredLockTimer.Tick -= DeferredLockTimer_Tick;
+            }
+
+            _deferredLockAttempts = 0;
+        }
+
         private void MainWindow_UnlockSucceeded(object? sender, EventArgs e)
         {
             _isLockScreenActive = false;
+            StopDeferredLockRetry();
             _inactivityLockService?.ResumeAfterUnlock();
         }
 
@@ -166,6 +267,9 @@ namespace InvoiceGenerator
 
         private void App_Exit(object? sender, ExitEventArgs e)
         {
+            _isShuttingDown = true;
+            StopDeferredLockRetry();
+
             if (_inactivityLockService is not null)
             {
                 _inactivityLockService.TimeoutElapsed -= InactivityLockService_TimeoutElapsed;
