@@ -1,136 +1,119 @@
-# Sample Invoice Template Guide
+# Invoice Template Guide
 
 This guide explains how to set up your Word template for use with Invoice Generator.
 
 ## Creating the Template
 
-1. **Open Microsoft Word** and create a new blank document
+1. **Open Microsoft Word** and open your existing completed invoice (e.g., `edcl066.docx`) as a reference for layout.
 
-2. **Add Your Header/Logo** (optional):
-   - Insert your company logo and name
-   - Add any company details
+2. **Save a copy** as your template (e.g., `Invoice_Template.docx`).
 
-3. **Add Invoice Title**:
-   ```
-   INVOICE
-   ```
+3. **Replace the actual values** with `{{PLACEHOLDER}}` markers as described below.
 
-4. **Add Invoice Details Section** with placeholders:
-   ```
-   Invoice Number: {{INVOICE_NUMBER}}
-   Invoice Period: {{INVOICE_PERIOD}}
-   Date From: {{DATE_FROM}}
-   Date To: {{DATE_TO}}
-   ```
+## Header / Invoice Details
 
-5. **Add Client Information Section** with placeholders:
-   ```
-   BILL TO:
-   {{CUSTOMER_NAME}}
-   {{CUSTOMER_STREET}}
-   {{CUSTOMER_CITY}}, {{CUSTOMER_POSTCODE}}
-   {{CLIENT_EMAIL}}
-   ```
-
-6. **Create Line Items Table**:
-   Create a table with the following headers:
-   - Description
-   - Quantity
-   - Unit Rate
-   - Amount
-   
-   Add placeholder rows:
-   ```
-   {{LINE_DESCRIPTION}} | {{LINE_QUANTITY}} | {{LINE_RATE}} | {{LINE_AMOUNT}}
-   ```
-
-7. **Add Summary Section**:
-   ```
-   Subtotal: {{SUBTOTAL}}
-   Tax (if applicable): {{TAX}}
-   ─────────────────
-   Total: {{TOTAL}}
-   ```
-
-8. **Add Footer** (optional):
-   - Payment terms
-   - Thank you message
-   - Contact information
-
-## Placeholder Reference
-
-When creating your template, use these placeholders:
-
-| Placeholder | Description |
-|-------------|-------------|
-| {{CLIENT_NAME}} | Client display name (legacy placeholder) |
-| {{CLIENT_ADDRESS}} | Client billing address (legacy placeholder) |
-| {{ADDRESS}} | Client billing address (legacy placeholder) |
-| {{CLIENT_EMAIL}} | Client email address |
-| {{EMAIL}} | Client email address (legacy placeholder) |
-| {{CUSTOMER_NAME}} | Customer name |
-| {{CUSTOMER_STREET}} | Customer street address |
-| {{CUSTOMER_CITY}} | Customer city |
-| {{CUSTOMER_POSTCODE}} | Customer postcode |
-| {{CUSTOMER_ADDRESS}} | Customer address line (legacy alias for billing address) |
-| {{INVOICE_NUMBER}} | Invoice number (e.g., INV-0042) |
-| {{INVOICE_NO}} | Invoice number (alias) |
-| {{INVOICE_PERIOD}} | Invoice period in DD/MM/YYYY - DD/MM/YYYY |
-| {{DATE_FROM}} | Invoice period start date (YYYY-MM-DD) |
-| {{DATE_TO}} | Invoice period end date (YYYY-MM-DD) |
-| {{LINE_DESCRIPTION}} | Line item description |
-| {{LINE_QUANTITY}} | Line item quantity |
-| {{LINE_RATE}} | Line item unit rate |
-| {{LINE_AMOUNT}} | Line item total amount |
-| {{SUBTOTAL}} | Sum of all line items |
-| {{TAX}} | Tax amount (if applicable) |
-| {{TOTAL}} | Grand total |
-
-## Saving the Template
-
-1. Save the document as **Invoice_Template.docx** in a location of your choice
-2. Note the full file path (e.g., `C:\Users\YourName\Documents\Invoice_Template.docx`)
-3. In the Settings window of Invoice Generator, set this path as your template
-
-## Tips
-
-- **Keep placeholders simple**: Use exactly the placeholder names listed above
-- **Use a table for line items**: The template engine works best with table cells
-- **Test first**: Create one invoice first to verify all placeholders work
-- **Backup template**: Keep a backup of your original template before first use
-- **Styled document**: You can use any formatting, colors, and fonts - only the placeholders get replaced
-
-## Example Template Structure
+Replace the static invoice info with these placeholders:
 
 ```
-═══════════════════════════════════════════
-YOUR COMPANY NAME
-Your Company Address | Phone | Email
-═══════════════════════════════════════════
+Invoice Number: {{INVOICE_NUMBER}}
+Invoice Period:  {{DATE_FROM}} – {{DATE_TO}}
+```
 
-INVOICE
+Or use `{{INVOICE_PERIOD}}` for a combined "dd/MM/yyyy - dd/MM/yyyy" range.
 
-Invoice #: {{INVOICE_NUMBER}}
-Period: {{INVOICE_PERIOD}}
+## Client Information
 
-─────────────────────────────────────────
-BILL TO:
+Replace the client name and address block with:
+
+```
 {{CUSTOMER_NAME}}
 {{CUSTOMER_STREET}}
 {{CUSTOMER_CITY}}, {{CUSTOMER_POSTCODE}}
 {{CLIENT_EMAIL}}
-
-─────────────────────────────────────────
-LINE ITEMS:
-
-Description         | Qty  | Rate      | Amount
-────────────────────────────────────────────
-{{LINE_DESCRIPTION}} | {{LINE_QUANTITY}} | ${{LINE_RATE}} | ${{LINE_AMOUNT}}
-
-                                    ─────────
-                                    Total: ${{TOTAL}}
-
-Thank you for your business!
 ```
 
-For further assistance, refer to the Invoice Generator documentation.
+## Line Items Table
+
+Your template must have a **Word table** for line items. The table should have:
+
+1. A **header row** with static column titles (these stay as-is):
+
+| Date | Day | Duration | No of Carers | Care Description | Rate (£) |
+|------|-----|----------|-------------|-----------------|----------|
+
+2. A single **template data row** directly below the header, containing these placeholders:
+
+| {{DATE}} | {{DAY}} | {{DURATION}} | {{NO_OF_CARERS}} | {{CARE_DESCRIPTION}} | {{RATE}} |
+|----------|---------|-------------|-------------------|---------------------|----------|
+
+**How it works:** When the invoice is generated, the app finds this template row, clones it once per CSV line item (filling in each row's values), and removes the original placeholder row. The result is a fully populated table with one row per visit.
+
+## Totals
+
+Below or after the table, add a total placeholder:
+
+```
+Total: £{{TOTAL}}
+```
+
+## Placeholder Reference
+
+| Placeholder | Replaced With |
+|-------------|---------------|
+| `{{INVOICE_NUMBER}}` | Invoice number (e.g., "EDCL080") |
+| `{{INVOICE_NO}}` | Invoice number (alias) |
+| `{{INVOICE_PERIOD}}` | "dd/MM/yyyy - dd/MM/yyyy" date range |
+| `{{DATE_FROM}}` | Period start date (dd/MM/yyyy) |
+| `{{DATE_TO}}` | Period end date (dd/MM/yyyy) |
+| `{{DATE_GENERATED}}` | Date invoice was generated |
+| `{{CUSTOMER_NAME}}` | Client display name |
+| `{{CLIENT_NAME}}` | Client display name (alias) |
+| `{{CUSTOMER_STREET}}` | Client street address |
+| `{{CUSTOMER_CITY}}` | Client city |
+| `{{CUSTOMER_POSTCODE}}` | Client postcode |
+| `{{CUSTOMER_ADDRESS}}` | Client billing address (legacy) |
+| `{{CLIENT_ADDRESS}}` | Client billing address (legacy) |
+| `{{CLIENT_EMAIL}}` | Client email address |
+| `{{EMAIL}}` | Client email (alias) |
+| **Line Item Placeholders** (in template table row): |  |
+| `{{DATE}}` | Visit date (dd/MM/yyyy) |
+| `{{DAY}}` | Day of week |
+| `{{DURATION}}` | Visit duration (e.g., "30 minutes") |
+| `{{NO_OF_CARERS}}` | Number of carers |
+| `{{CARE_DESCRIPTION}}` | Description of care |
+| `{{RATE}}` | Rate for this visit (£) |
+| **Totals:** |  |
+| `{{TOTAL}}` | Sum of all line item rates |
+| `{{TOTAL_AMOUNT}}` | Same as TOTAL (alias) |
+| `{{SUBTOTAL}}` | Same as TOTAL (alias) |
+
+## CSV File Format
+
+Your CSV files should have these exact column headers:
+
+```csv
+Date,Day,Duration,No of Carers,Care Description,Rate (£)
+01/01/2026,Thursday,30 minutes,1,Morning care call,14.99
+01/01/2026,Thursday,45 minutes,1,Evening care call,17.99
+```
+
+## Step-by-Step Template Creation
+
+1. Open your reference invoice in Word
+2. **Save As** → `Invoice_Template.docx`
+3. Replace the invoice number with `{{INVOICE_NUMBER}}`
+4. Replace dates with `{{DATE_FROM}}` and `{{DATE_TO}}`
+5. Replace client name/address with `{{CUSTOMER_NAME}}`, `{{CUSTOMER_STREET}}`, etc.
+6. In the line items table, **delete all data rows** except one
+7. In that single remaining data row, put the placeholders: `{{DATE}}`, `{{DAY}}`, `{{DURATION}}`, `{{NO_OF_CARERS}}`, `{{CARE_DESCRIPTION}}`, `{{RATE}}`
+8. Replace the total value with `{{TOTAL}}`
+9. Save the template
+10. In the app's Settings, set the template path to this file
+
+## Tips
+
+- **Keep placeholders exact**: Use exactly `{{NAME}}` with double curly braces
+- **Word may split placeholders**: If a placeholder doesn't get replaced, select it, delete it, and re-type it in one go (don't copy-paste character by character)
+- **Table formatting is preserved**: The cloned rows inherit all formatting (borders, fonts, alignment) from the template row
+- **Test first**: Generate one invoice to verify everything works before processing a batch
+- **Backup template**: Keep a copy of your template before first use
