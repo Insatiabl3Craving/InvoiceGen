@@ -118,7 +118,7 @@ namespace InvoiceGenerator.Services
                 settings.AppPasswordLastFailedUtc = null;
                 settings.AppPasswordLockoutUntilUtc = null;
                 await _settingsService.UpdateSettingsAsync(settings);
-
+                
                 return new PasswordVerificationResult
                 {
                     Status = PasswordVerificationStatus.Success,
