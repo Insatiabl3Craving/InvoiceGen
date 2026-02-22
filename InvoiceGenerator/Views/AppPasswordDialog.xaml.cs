@@ -44,6 +44,7 @@ namespace InvoiceGenerator.Views
             {
                 ResizeMode = ResizeMode.NoResize;
                 ShowInTaskbar = false;
+                Title = string.Empty;
             }
 
             UpdatePasswordPlaceholderVisibility();
