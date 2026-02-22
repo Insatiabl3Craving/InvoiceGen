@@ -5,32 +5,44 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
 using InvoiceGenerator.Services;
+using InvoiceGenerator.ViewModels;
 using InvoiceGenerator.Views;
 
 namespace InvoiceGenerator
 {
     public partial class MainWindow : Window
     {
-        private readonly AuthStateCoordinator _authCoordinator;
-        private readonly ISecurityLogger _logger;
-        private bool _isLocked;
-        private bool _isVerifying;
+        private readonly LockOverlayViewModel _viewModel;
 
         /// <summary>
         /// Raised after a successful unlock so the app can resume the inactivity timer.
+        /// Delegates to <see cref="LockOverlayViewModel.UnlockSucceeded"/>.
         /// </summary>
-        public event EventHandler? UnlockSucceeded;
+        public event EventHandler? UnlockSucceeded
+        {
+            add => _viewModel.UnlockSucceeded += value;
+            remove => _viewModel.UnlockSucceeded -= value;
+        }
 
-        public bool IsLockOverlayVisible => _isLocked;
+        public bool IsLockOverlayVisible => _viewModel.IsLocked;
 
         public MainWindow(AuthStateCoordinator authCoordinator, ISecurityLogger? logger = null)
         {
-            _authCoordinator = authCoordinator ?? throw new ArgumentNullException(nameof(authCoordinator));
-            _logger = logger ?? NullSecurityLogger.Instance;
+            _viewModel = new LockOverlayViewModel(
+                authCoordinator ?? throw new ArgumentNullException(nameof(authCoordinator)),
+                logger);
+
             InitializeComponent();
+
+            // Set DataContext for the lock overlay bindings
+            LockOverlay.DataContext = _viewModel;
+
+            // Subscribe to VM animation requests
+            _viewModel.ShakeRequested += OnShakeRequested;
+            _viewModel.FadeOutRequested += OnFadeOutRequested;
         }
 
-        // ── Navigation ───────────────────────────────────────────────
+        // ── Navigation (stays as code-behind) ────────────────────────
 
         private void ClientManagerBtn_Click(object sender, RoutedEventArgs e)
         {
@@ -56,20 +68,16 @@ namespace InvoiceGenerator
 
         public void ShowLockOverlay()
         {
-            _isLocked = true;
-            _isVerifying = false;
+            _viewModel.ShowLock();
 
-            // Reset UI state
+            // Reset PasswordBox UI (not bindable)
             LockPasswordBox.Password = "";
             LockPasswordTextBox.Text = "";
             LockPasswordTextBox.Visibility = Visibility.Collapsed;
             LockPasswordBox.Visibility = Visibility.Visible;
-            HideLockVerifyError();
 
-            LockSubmitBtn.IsEnabled = true;
             LockSubmitBtn.IsDefault = true;
             LockOverlay.Opacity = 1;
-            LockOverlay.Visibility = Visibility.Visible;
             UpdateLockPlaceholderVisibility();
 
             // Focus the password field after layout
@@ -82,9 +90,7 @@ namespace InvoiceGenerator
 
         private void HideLockOverlay()
         {
-            _isLocked = false;
             LockSubmitBtn.IsDefault = false;
-            LockOverlay.Visibility = Visibility.Collapsed;
             LockOverlay.Opacity = 1; // reset for next lock
         }
 
@@ -93,7 +99,7 @@ namespace InvoiceGenerator
         /// </summary>
         protected override void OnClosing(CancelEventArgs e)
         {
-            if (_isLocked)
+            if (!_viewModel.CanClose)
             {
                 e.Cancel = true;
                 return;
@@ -102,7 +108,7 @@ namespace InvoiceGenerator
             base.OnClosing(e);
         }
 
-        // ── Password reveal (press-and-hold) ────────────────────────
+        // ── Password reveal (press-and-hold) — WPF PasswordBox limitation ──
 
         private void ShowLockPassword()
         {
@@ -159,133 +165,32 @@ namespace InvoiceGenerator
             UpdateLockPlaceholderVisibility();
         }
 
-        // ── Error display ────────────────────────────────────────────
+        // ── Submit bridge (code-behind → ViewModel command) ──────────
 
-        private void ShowLockVerifyError(string message)
-        {
-            LockVerifyErrorText.Text = message;
-            LockVerifyErrorText.Visibility = Visibility.Visible;
-        }
-
-        private void HideLockVerifyError()
-        {
-            LockVerifyErrorText.Text = string.Empty;
-            LockVerifyErrorText.Visibility = Visibility.Collapsed;
-        }
-
-        // ── Submit / verify ──────────────────────────────────────────
-
-        private void SetLockSubmittingState(bool isSubmitting)
-        {
-            _isVerifying = isSubmitting;
-            LockSubmitBtn.IsEnabled = !isSubmitting;
-        }
-
-        private async void LockSubmitBtn_Click(object sender, RoutedEventArgs e)
-        {
-            if (_isVerifying)
-            {
-                return;
-            }
-
-            HideLockVerifyError();
-            SetLockSubmittingState(true);
-
-            try
-            {
-                await HandleLockVerifyAsync();
-            }
-            finally
-            {
-                SetLockSubmittingState(false);
-            }
-        }
-
-        private async Task HandleLockVerifyAsync()
+        private void LockSubmitBtn_Click(object sender, RoutedEventArgs e)
         {
             var password = GetLockPassword();
-
-            if (string.IsNullOrWhiteSpace(password))
+            if (_viewModel.SubmitCommand.CanExecute(password))
             {
-                await PlayLockShakeAsync();
-                ShowLockVerifyError("Please enter your password.");
-                ClearLockPassword();
-                LockPasswordBox.Focus();
-                return;
-            }
-
-            try
-            {
-                var result = await _authCoordinator.TryUnlockAsync(password);
-
-                if (result.Status == AuthCoordinatorUnlockStatus.LockedOut)
-                {
-                    ShowLockVerifyError($"Too many attempts. Try again in {FormatDuration(result.LockoutRemaining)}.");
-                    ClearLockPassword();
-                    LockPasswordBox.Focus();
-                    return;
-                }
-
-                if (result.Status == AuthCoordinatorUnlockStatus.InvalidPassword)
-                {
-                    await PlayLockShakeAsync();
-                    ShowLockVerifyError(result.Message);
-                    ClearLockPassword();
-                    LockPasswordBox.Focus();
-                    return;
-                }
-
-                if (result.Status == AuthCoordinatorUnlockStatus.EmptyPassword)
-                {
-                    await PlayLockShakeAsync();
-                    ShowLockVerifyError(result.Message);
-                    ClearLockPassword();
-                    LockPasswordBox.Focus();
-                    return;
-                }
-
-                if (result.Status == AuthCoordinatorUnlockStatus.PasswordNotSet)
-                {
-                    ShowLockVerifyError("Password is not configured.");
-                    return;
-                }
-
-                if (result.Status == AuthCoordinatorUnlockStatus.Error)
-                {
-                    await PlayLockShakeAsync();
-                    ShowLockVerifyError(result.Message);
-                    return;
-                }
-
-                if (!result.IsSuccess)
-                {
-                    await PlayLockShakeAsync();
-                    ShowLockVerifyError(result.Message);
-                    return;
-                }
-
-                // Success — fade out overlay, then notify
-                HideLockVerifyError();
-                await PlayLockFadeOutAsync();
-                HideLockOverlay();
-
-                try
-                {
-                    UnlockSucceeded?.Invoke(this, EventArgs.Empty);
-                }
-                catch (Exception unlockEx)
-                {
-                    _logger.HandlerException("UnlockSucceeded", unlockEx, _authCoordinator.CurrentLockCycleId);
-                }
-            }
-            catch (Exception ex)
-            {
-                await PlayLockShakeAsync();
-                ShowLockVerifyError($"Error verifying password: {ex.Message}");
+                _viewModel.SubmitCommand.Execute(password);
             }
         }
 
-        // ── Animations ──────────────────────────────────────────────
+        // ── Animation callbacks from ViewModel events ────────────────
+
+        private async void OnShakeRequested(object? sender, EventArgs e)
+        {
+            await PlayLockShakeAsync();
+            ClearLockPassword();
+            LockPasswordBox.Focus();
+        }
+
+        private async void OnFadeOutRequested(object? sender, EventArgs e)
+        {
+            await PlayLockFadeOutAsync();
+            HideLockOverlay();
+            _viewModel.CompleteFadeOut();
+        }
 
         private async Task PlayLockShakeAsync()
         {
@@ -308,17 +213,6 @@ namespace InvoiceGenerator
             storyboard.Completed += OnCompleted;
             storyboard.Begin(this, true);
             await tcs.Task;
-        }
-
-        // ── Utility ─────────────────────────────────────────────────
-
-        private static string FormatDuration(TimeSpan duration)
-        {
-            var safe = duration > TimeSpan.Zero ? duration : TimeSpan.Zero;
-            var totalSeconds = (int)Math.Ceiling(safe.TotalSeconds);
-            var minutes = totalSeconds / 60;
-            var seconds = totalSeconds % 60;
-            return $"{minutes:D2}:{seconds:D2}";
         }
     }
 }

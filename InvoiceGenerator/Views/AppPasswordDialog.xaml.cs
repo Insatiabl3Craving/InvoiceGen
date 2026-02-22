@@ -1,64 +1,95 @@
 using System;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Animation;
 using InvoiceGenerator.Services;
+using InvoiceGenerator.ViewModels;
 
 namespace InvoiceGenerator.Views
 {
     public partial class AppPasswordDialog : Window
     {
-        private readonly AuthStateCoordinator _authCoordinator;
-        private readonly ISecurityLogger _logger;
-        private readonly AuthService _authService = new();
+        private readonly AppPasswordDialogViewModel _viewModel;
         private readonly bool _isLockScreenMode;
-        private bool _isSetupMode;
-        private bool _isVerifying;
 
         public AppPasswordDialog(bool isLockScreenMode = false, AuthStateCoordinator? authCoordinator = null, ISecurityLogger? logger = null)
         {
-            _authCoordinator = authCoordinator ?? new AuthStateCoordinator();
-            _logger = logger ?? NullSecurityLogger.Instance;
             _isLockScreenMode = isLockScreenMode;
+            _viewModel = new AppPasswordDialogViewModel(
+                authCoordinator ?? new AuthStateCoordinator(),
+                logger,
+                authService: null,
+                isLockScreenMode: isLockScreenMode);
+
             InitializeComponent();
+            DataContext = _viewModel;
+
+            // Subscribe to VM animation events
+            _viewModel.ShakeRequested += OnShakeRequested;
+            _viewModel.FadeOutRequested += OnFadeOutRequested;
+
+            // Watch DialogOutcome to set DialogResult
+            _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+
             Loaded += AppPasswordDialog_Loaded;
         }
 
         private async void AppPasswordDialog_Loaded(object sender, RoutedEventArgs e)
         {
-            await ConfigureModeAsync();
+            await _viewModel.InitializeAsync();
+
+            // Window-level properties the ViewModel can't set
+            if (_isLockScreenMode)
+            {
+                ResizeMode = ResizeMode.NoResize;
+                ShowInTaskbar = false;
+            }
+
             UpdatePasswordPlaceholderVisibility();
         }
 
-        private async Task ConfigureModeAsync()
+        private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (_isLockScreenMode)
+            if (e.PropertyName == nameof(AppPasswordDialogViewModel.DialogOutcome) && _viewModel.DialogOutcome.HasValue)
             {
-                _isSetupMode = false;
-                ConfirmPanel.Visibility = Visibility.Collapsed;
-                HintText.Text = "Session locked after inactivity. Enter your password to continue.";
-
-                ResizeMode = ResizeMode.NoResize;
-                ShowInTaskbar = false;
-                InlineSubmitBtn.ToolTip = "Unlock";
-                return;
-            }
-
-            _isSetupMode = !await _authService.IsPasswordSetAsync();
-
-            if (_isSetupMode)
-            {
-                ConfirmPanel.Visibility = Visibility.Visible;
-                HintText.Text = "Choose a password you will remember. Minimum 8 characters.";
-                InlineSubmitBtn.ToolTip = "Set Password";
-            }
-            else
-            {
-                ConfirmPanel.Visibility = Visibility.Collapsed;
-                HintText.Text = "";
-                InlineSubmitBtn.ToolTip = "Continue";
+                DialogResult = _viewModel.DialogOutcome.Value;
+                Close();
             }
         }
+
+        // ── Submit bridge (code-behind → ViewModel command) ──────────
+
+        private void ContinueBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var pair = new PasswordPair
+            {
+                Password = GetCurrentPassword(),
+                ConfirmPassword = GetConfirmPassword()
+            };
+
+            if (_viewModel.SubmitCommand.CanExecute(pair))
+            {
+                _viewModel.SubmitCommand.Execute(pair);
+            }
+        }
+
+        // ── Animation callbacks from ViewModel events ────────────────
+
+        private async void OnShakeRequested(object? sender, EventArgs e)
+        {
+            await PlayShakeAnimationAsync();
+            ClearPasswordFields();
+            PasswordBox.Focus();
+        }
+
+        private async void OnFadeOutRequested(object? sender, EventArgs e)
+        {
+            await PlayUnlockTransitionAsync();
+            _viewModel.DialogOutcome = true;
+        }
+
+        // ── Primary password reveal (press-and-hold) ─────────────────
 
         private void ShowPrimaryPassword()
         {
@@ -67,7 +98,6 @@ namespace InvoiceGenerator.Views
             PasswordTextBox.Visibility = Visibility.Visible;
             PasswordTextBox.Focus();
             PasswordTextBox.CaretIndex = PasswordTextBox.Text.Length;
-
             UpdatePasswordPlaceholderVisibility();
         }
 
@@ -77,59 +107,17 @@ namespace InvoiceGenerator.Views
             PasswordTextBox.Visibility = Visibility.Collapsed;
             PasswordBox.Visibility = Visibility.Visible;
             PasswordBox.Focus();
-
             UpdatePasswordPlaceholderVisibility();
         }
 
-        private void RevealPasswordButton_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            ShowPrimaryPassword();
-        }
+        private void RevealPasswordButton_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e) => ShowPrimaryPassword();
+        private void RevealPasswordButton_PreviewMouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e) => HidePrimaryPassword();
+        private void RevealPasswordButton_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e) => HidePrimaryPassword();
+        private void RevealPasswordButton_LostMouseCapture(object sender, System.Windows.Input.MouseEventArgs e) => HidePrimaryPassword();
+        private void RevealPasswordButton_PreviewTouchDown(object sender, System.Windows.Input.TouchEventArgs e) => ShowPrimaryPassword();
+        private void RevealPasswordButton_PreviewTouchUp(object sender, System.Windows.Input.TouchEventArgs e) => HidePrimaryPassword();
 
-        private void RevealPasswordButton_PreviewMouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            HidePrimaryPassword();
-        }
-
-        private void RevealPasswordButton_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            HidePrimaryPassword();
-        }
-
-        private void RevealPasswordButton_LostMouseCapture(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            HidePrimaryPassword();
-        }
-
-        private void RevealPasswordButton_PreviewTouchDown(object sender, System.Windows.Input.TouchEventArgs e)
-        {
-            ShowPrimaryPassword();
-        }
-
-        private void RevealPasswordButton_PreviewTouchUp(object sender, System.Windows.Input.TouchEventArgs e)
-        {
-            HidePrimaryPassword();
-        }
-
-        private void PasswordInput_Changed(object sender, RoutedEventArgs e)
-        {
-            UpdatePasswordPlaceholderVisibility();
-        }
-
-        private void PasswordInput_FocusChanged(object sender, RoutedEventArgs e)
-        {
-            UpdatePasswordPlaceholderVisibility();
-        }
-
-        private void UpdatePasswordPlaceholderVisibility()
-        {
-            var currentPassword = GetCurrentPassword();
-            var hasInputFocus = PasswordBox.IsKeyboardFocusWithin || PasswordTextBox.IsKeyboardFocusWithin;
-
-            PasswordPlaceholder.Visibility = string.IsNullOrEmpty(currentPassword) && !hasInputFocus
-                ? Visibility.Visible
-                : Visibility.Collapsed;
-        }
+        // ── Confirm password reveal (press-and-hold) ─────────────────
 
         private void ShowConfirmPassword()
         {
@@ -148,61 +136,55 @@ namespace InvoiceGenerator.Views
             ConfirmPasswordBox.Focus();
         }
 
-        private void RevealConfirmButton_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void RevealConfirmButton_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e) => ShowConfirmPassword();
+        private void RevealConfirmButton_PreviewMouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e) => HideConfirmPassword();
+        private void RevealConfirmButton_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e) => HideConfirmPassword();
+        private void RevealConfirmButton_LostMouseCapture(object sender, System.Windows.Input.MouseEventArgs e) => HideConfirmPassword();
+        private void RevealConfirmButton_PreviewTouchDown(object sender, System.Windows.Input.TouchEventArgs e) => ShowConfirmPassword();
+        private void RevealConfirmButton_PreviewTouchUp(object sender, System.Windows.Input.TouchEventArgs e) => HideConfirmPassword();
+
+        // ── Input helpers ────────────────────────────────────────────
+
+        private void PasswordInput_Changed(object sender, RoutedEventArgs e) => UpdatePasswordPlaceholderVisibility();
+        private void PasswordInput_FocusChanged(object sender, RoutedEventArgs e) => UpdatePasswordPlaceholderVisibility();
+
+        private void UpdatePasswordPlaceholderVisibility()
         {
-            ShowConfirmPassword();
+            var currentPassword = GetCurrentPassword();
+            var hasInputFocus = PasswordBox.IsKeyboardFocusWithin || PasswordTextBox.IsKeyboardFocusWithin;
+
+            PasswordPlaceholder.Visibility = string.IsNullOrEmpty(currentPassword) && !hasInputFocus
+                ? Visibility.Visible
+                : Visibility.Collapsed;
         }
 
-        private void RevealConfirmButton_PreviewMouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            HideConfirmPassword();
-        }
-
-        private void RevealConfirmButton_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            HideConfirmPassword();
-        }
-
-        private void RevealConfirmButton_LostMouseCapture(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            HideConfirmPassword();
-        }
-
-        private void RevealConfirmButton_PreviewTouchDown(object sender, System.Windows.Input.TouchEventArgs e)
-        {
-            ShowConfirmPassword();
-        }
-
-        private void RevealConfirmButton_PreviewTouchUp(object sender, System.Windows.Input.TouchEventArgs e)
-        {
-            HideConfirmPassword();
-        }
-
-        /// <summary>
-        /// Get the current password value, handling both visible and hidden states
-        /// </summary>
         private string GetCurrentPassword()
         {
             return PasswordTextBox.Visibility == Visibility.Visible ? PasswordTextBox.Text : PasswordBox.Password;
         }
 
-        /// <summary>
-        /// Get the confirm password value, handling both visible and hidden states
-        /// </summary>
         private string GetConfirmPassword()
         {
             var isConfirmVisible = ConfirmPasswordTextBox.Visibility == Visibility.Visible;
             return isConfirmVisible ? ConfirmPasswordTextBox.Text : ConfirmPasswordBox.Password;
         }
 
-        /// <summary>
-        /// Play the shake animation to indicate an error
-        /// </summary>
+        private void ClearPasswordFields()
+        {
+            PasswordBox.Password = "";
+            PasswordTextBox.Text = "";
+            ConfirmPasswordBox.Password = "";
+            ConfirmPasswordTextBox.Text = "";
+            UpdatePasswordPlaceholderVisibility();
+        }
+
+        // ── Animations ──────────────────────────────────────────────
+
         private async Task PlayShakeAnimationAsync()
         {
             var storyboard = (Storyboard)Resources["ShakeStoryboard"];
             storyboard.Begin();
-            await Task.Delay(600); // Wait for animation to complete
+            await Task.Delay(600);
         }
 
         private async Task PlayUnlockTransitionAsync()
@@ -221,196 +203,9 @@ namespace InvoiceGenerator.Views
             await completionSource.Task;
         }
 
-        private void SetSubmittingState(bool isSubmitting)
-        {
-            _isVerifying = isSubmitting;
-            InlineSubmitBtn.IsEnabled = !isSubmitting;
-        }
-
-        /// <summary>
-        /// Clear both password fields
-        /// </summary>
-        private void ClearPasswordFields()
-        {
-            PasswordBox.Password = "";
-            PasswordTextBox.Text = "";
-            ConfirmPasswordBox.Password = "";
-            ConfirmPasswordTextBox.Text = "";
-            UpdatePasswordPlaceholderVisibility();
-        }
-
-        private void ShowVerifyError(string message)
-        {
-            VerifyErrorText.Text = message;
-            VerifyErrorText.Visibility = Visibility.Visible;
-        }
-
-        private void HideVerifyError()
-        {
-            VerifyErrorText.Text = string.Empty;
-            VerifyErrorText.Visibility = Visibility.Collapsed;
-        }
-
-        private async void ContinueBtn_Click(object sender, RoutedEventArgs e)
-        {
-            if (_isVerifying)
-            {
-                return;
-            }
-
-            HideVerifyError();
-            SetSubmittingState(true);
-
-            try
-            {
-                if (_isSetupMode)
-                {
-                    await HandleSetupAsync();
-                    return;
-                }
-
-                await HandleVerifyAsync();
-            }
-            finally
-            {
-                SetSubmittingState(false);
-            }
-        }
-
-        private async Task HandleSetupAsync()
-        {
-            var password = GetCurrentPassword();
-            var confirm = GetConfirmPassword();
-
-            if (string.IsNullOrWhiteSpace(password))
-            {
-                await PlayShakeAnimationAsync();
-                ShowVerifyError("Please enter a password.");
-                ClearPasswordFields();
-                PasswordBox.Focus();
-                return;
-            }
-
-            if (password.Length < 8)
-            {
-                await PlayShakeAnimationAsync();
-                ShowVerifyError("Password must be at least 8 characters.");
-                ClearPasswordFields();
-                PasswordBox.Focus();
-                return;
-            }
-
-            if (!string.Equals(password, confirm, StringComparison.Ordinal))
-            {
-                await PlayShakeAnimationAsync();
-                ShowVerifyError("Passwords do not match.");
-                ClearPasswordFields();
-                PasswordBox.Focus();
-                return;
-            }
-
-            try
-            {
-                await _authService.SetPasswordAsync(password);
-                _logger.AppStartupAuth("setup", true);
-                await PlayUnlockTransitionAsync();
-                DialogResult = true;
-                Close();
-            }
-            catch (Exception ex)
-            {
-                await PlayShakeAnimationAsync();
-                MessageBox.Show($"Error setting password: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async Task HandleVerifyAsync()
-        {
-            if (string.IsNullOrWhiteSpace(GetCurrentPassword()))
-            {
-                await PlayShakeAnimationAsync();
-                ShowVerifyError("Please enter your password.");
-                ClearPasswordFields();
-                PasswordBox.Focus();
-                return;
-            }
-
-            try
-            {
-                var result = await _authCoordinator.TryUnlockAsync(GetCurrentPassword());
-
-                if (result.Status == AuthCoordinatorUnlockStatus.LockedOut)
-                {
-                    ShowVerifyError($"Too many attempts. Try again in {FormatDuration(result.LockoutRemaining)}.");
-                    ClearPasswordFields();
-                    PasswordBox.Focus();
-                    return;
-                }
-
-                if (result.Status == AuthCoordinatorUnlockStatus.InvalidPassword)
-                {
-                    await PlayShakeAnimationAsync();
-                    ShowVerifyError(result.Message);
-                    ClearPasswordFields();
-                    PasswordBox.Focus();
-                    return;
-                }
-
-                if (result.Status == AuthCoordinatorUnlockStatus.EmptyPassword)
-                {
-                    await PlayShakeAnimationAsync();
-                    ShowVerifyError(result.Message);
-                    ClearPasswordFields();
-                    PasswordBox.Focus();
-                    return;
-                }
-
-                if (result.Status == AuthCoordinatorUnlockStatus.PasswordNotSet)
-                {
-                    ShowVerifyError("Password is not configured.");
-                    return;
-                }
-
-                if (result.Status == AuthCoordinatorUnlockStatus.Error)
-                {
-                    await PlayShakeAnimationAsync();
-                    ShowVerifyError(result.Message);
-                    return;
-                }
-
-                if (!result.IsSuccess)
-                {
-                    await PlayShakeAnimationAsync();
-                    ShowVerifyError(result.Message);
-                    return;
-                }
-
-                HideVerifyError();
-                _logger.AppStartupAuth("verify", true);
-                await PlayUnlockTransitionAsync();
-                DialogResult = true;
-                Close();
-            }
-            catch (Exception ex)
-            {
-                await PlayShakeAnimationAsync();
-                ShowVerifyError($"Error verifying password: {ex.Message}");
-            }
-        }
-
-        private static string FormatDuration(TimeSpan duration)
-        {
-            var safeDuration = duration > TimeSpan.Zero ? duration : TimeSpan.Zero;
-            var totalSeconds = (int)Math.Ceiling(safeDuration.TotalSeconds);
-            var minutes = totalSeconds / 60;
-            var seconds = totalSeconds % 60;
-            return $"{minutes:D2}:{seconds:D2}";
-        }
-
         private void CancelBtn_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
-            Close();
+            _viewModel.Cancel();
         }
     }
 }

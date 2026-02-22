@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:InvoiceGenerator"
+        xmlns:converters="clr-namespace:InvoiceGenerator.Converters"
         mc:Ignorable="d"
         Title="Invoice Generator" Height="800" Width="1200" WindowStartupLocation="CenterScreen"
         Background="#FAFAFA">
@@ -103,6 +104,9 @@
             </Setter>
         </Style>
 
+        <!-- Converters -->
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+
         <!-- Eye / submit button style -->
         <Style x:Key="LockEyeButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="42"/>
@@ -151,7 +155,9 @@
         </StackPanel>
 
         <!-- Layer 1: Lock overlay (rendered on top, collapsed when unlocked) -->
-        <Grid x:Name="LockOverlay" Visibility="Collapsed" Background="#FAFAFA"
+        <Grid x:Name="LockOverlay"
+              Visibility="{Binding IsLocked, Converter={StaticResource BoolToVisibility}}"
+              Background="#FAFAFA"
               KeyboardNavigation.TabNavigation="Cycle"
               FocusManager.IsFocusScope="True">
 
@@ -217,7 +223,9 @@
                 </Grid>
 
                 <!-- Inline error text -->
-                <TextBlock x:Name="LockVerifyErrorText" Visibility="Collapsed"
+                <TextBlock x:Name="LockVerifyErrorText"
+                           Text="{Binding ErrorMessage}"
+                           Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}"
                            Foreground="#A4262C" FontSize="12"
                            Margin="0,-10,0,12" TextWrapping="Wrap"/>
 

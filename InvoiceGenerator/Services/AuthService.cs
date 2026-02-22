@@ -39,13 +39,13 @@ namespace InvoiceGenerator.Services
             _logger = logger ?? NullSecurityLogger.Instance;
         }
 
-        public async Task<bool> IsPasswordSetAsync()
+        public virtual async Task<bool> IsPasswordSetAsync()
         {
             var settings = await _settingsService.GetSettingsAsync();
             return HasPassword(settings);
         }
 
-        public async Task SetPasswordAsync(string password)
+        public virtual async Task SetPasswordAsync(string password)
         {
             var settings = await _settingsService.GetSettingsAsync();
 
@@ -71,7 +71,7 @@ namespace InvoiceGenerator.Services
             return result.IsSuccess;
         }
 
-        public async Task<PasswordVerificationResult> VerifyPasswordWithPolicyAsync(string password)
+        public virtual async Task<PasswordVerificationResult> VerifyPasswordWithPolicyAsync(string password)
         {
             var settings = await _settingsService.GetSettingsAsync();
             if (!HasPassword(settings))
