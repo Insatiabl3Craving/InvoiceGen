@@ -1,6 +1,9 @@
-Description,Quantity,UnitRate
-Consulting Services,10,150.00
-Software License,1,500.00
-Technical Support,5,75.00
-Project Management,40,100.00
-Training,8,125.00
+Date,Day,Duration,No of Carers,Care Description,Rate (£)
+01/01/2026,Thursday,30 minutes,1,Morning care call,14.99
+01/01/2026,Thursday,45 minutes,1,Evening care call,17.99
+02/01/2026,Friday,30 minutes,1,Morning care call,14.99
+02/01/2026,Friday,45 minutes,1,Evening care call,17.99
+05/01/2026,Monday,30 minutes,1,Morning care call,14.99
+05/01/2026,Monday,45 minutes,1,Evening care call,17.99
+06/01/2026,Tuesday,30 minutes,1,Morning care call,14.99
+06/01/2026,Tuesday,45 minutes,1,Evening care call,17.99

@@ -77,7 +77,11 @@ namespace InvoiceGenerator.Views
                 {
                     if (!_csvService.ValidateCsvFile(openFileDialog.FileName))
                     {
-                        MessageBox.Show("CSV file must contain columns: Description, Quantity, UnitRate", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        // Show diagnostic info: what headers were actually found
+                        var debugInfo = _csvService.GetHeaderDiagnostics(openFileDialog.FileName);
+                        MessageBox.Show(
+                            $"CSV validation failed.\n\nExpected columns: Date, Day, Duration, No of Carers, Care Description, Rate (£)\n\n{debugInfo}",
+                            "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                         return;
                     }
 
@@ -114,16 +118,18 @@ namespace InvoiceGenerator.Views
             preview.AppendLine($"Date To: {DateToDP.SelectedDate:yyyy-MM-dd}");
             preview.AppendLine();
             preview.AppendLine("Line Items:");
+            preview.AppendLine($"  {"Date",-12} {"Day",-10} {"Duration",-14} {"Carers",-8} {"Description",-25} {"Rate",8}");
+            preview.AppendLine($"  {new string('-', 80)}");
 
             decimal total = 0;
             foreach (var item in _currentLineItems)
             {
-                preview.AppendLine($"  {item.Description}: ${item.Amount:F2} (Qty: {item.Quantity} x ${item.UnitRate:F2})");
-                total += item.Amount;
+                preview.AppendLine($"  {item.Date:dd/MM/yyyy}  {item.Day,-10} {item.Duration,-14} {item.NumberOfCarers,-8} {item.CareDescription,-25} £{item.Rate,7:F2}");
+                total += item.Rate;
             }
 
             preview.AppendLine();
-            preview.AppendLine($"Total: ${total:F2}");
+            preview.AppendLine($"Total: £{total:F2}");
 
             PreviewTB.Text = preview.ToString();
         }
@@ -194,7 +200,8 @@ namespace InvoiceGenerator.Views
                 var docxPath = System.IO.Path.Combine(settings.InvoicesFolderPath, fileName + ".docx");
                 var pdfPath = System.IO.Path.Combine(settings.InvoicesFolderPath, fileName + ".pdf");
 
-                // Prepare template replacements
+                // Prepare header-level template replacements
+                var totalAmount = _currentLineItems.Sum(i => i.Rate);
                 var replacements = new Dictionary<string, string>
                 {
                     { "INVOICE_NUMBER", InvoiceNumberTB.Text },
@@ -209,23 +216,19 @@ namespace InvoiceGenerator.Views
                     { "CUSTOMER_CITY", _selectedClient.City ?? string.Empty },
                     { "CUSTOMER_POSTCODE", _selectedClient.Postcode ?? string.Empty },
                     { "CUSTOMER_ADDRESS", _selectedClient.BillingAddress },
-                    { "DATE_FROM", DateFromDP.SelectedDate.Value.ToString("yyyy-MM-dd") },
-                    { "DATE_TO", DateToDP.SelectedDate.Value.ToString("yyyy-MM-dd") },
+                    { "DATE_FROM", DateFromDP.SelectedDate.Value.ToString("dd/MM/yyyy") },
+                    { "DATE_TO", DateToDP.SelectedDate.Value.ToString("dd/MM/yyyy") },
                     { "INVOICE_PERIOD", $"{DateFromDP.SelectedDate.Value:dd/MM/yyyy} - {DateToDP.SelectedDate.Value:dd/MM/yyyy}" },
-                    { "DATE_GENERATED", DateTime.Now.ToString("yyyy-MM-dd") },
-                    { "TOTAL_AMOUNT", _currentLineItems.Sum(i => i.Amount).ToString("F2") }
+                    { "DATE_GENERATED", DateTime.Now.ToString("dd/MM/yyyy") },
+                    { "TOTAL", $"\u00a3{totalAmount:F2}" },
+                    { "TOTAL_AMOUNT", $"\u00a3{totalAmount:F2}" },
+                    { "SUBTOTAL", $"\u00a3{totalAmount:F2}" },
+                    { "TAX", "0.00" }
                 };
 
-                // Add line items as a formatted string
-                var lineItemsText = new StringBuilder();
-                foreach (var item in _currentLineItems)
-                {
-                    lineItemsText.AppendLine($"{item.Description} - Qty: {item.Quantity} x ${item.UnitRate:F2} = ${item.Amount:F2}");
-                }
-                replacements["LINE_ITEMS"] = lineItemsText.ToString();
-
-                // Generate DOCX from template
-                _wordTemplateService.ReplaceTemplateFields(settings.TemplateFilePath, docxPath, replacements);
+                // Generate DOCX from template (with table-row cloning for line items)
+                _wordTemplateService.GenerateInvoiceFromTemplate(
+                    settings.TemplateFilePath, docxPath, replacements, _currentLineItems);
 
                 // Convert to PDF
                 await _pdfConversionService.ConvertDocxToPdfAsync(docxPath, pdfPath);

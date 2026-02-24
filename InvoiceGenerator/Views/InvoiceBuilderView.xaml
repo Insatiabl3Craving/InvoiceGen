@@ -55,6 +55,8 @@
         </StackPanel>
 
         <TextBlock Text="Preview:" FontSize="14" FontWeight="Bold" Margin="0,10,0,10"/>
-        <TextBox Name="PreviewTB" Height="200" Padding="10" IsReadOnly="True" TextWrapping="Wrap"/>
+        <TextBox Name="PreviewTB" Height="250" Padding="10" IsReadOnly="True" TextWrapping="Wrap"
+                 FontFamily="Consolas" FontSize="11"
+                 VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
     </StackPanel>
 </UserControl>
