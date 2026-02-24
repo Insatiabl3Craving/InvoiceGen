@@ -220,9 +220,9 @@ namespace InvoiceGenerator.Views
                     { "DATE_TO", DateToDP.SelectedDate.Value.ToString("dd/MM/yyyy") },
                     { "INVOICE_PERIOD", $"{DateFromDP.SelectedDate.Value:dd/MM/yyyy} - {DateToDP.SelectedDate.Value:dd/MM/yyyy}" },
                     { "DATE_GENERATED", DateTime.Now.ToString("dd/MM/yyyy") },
-                    { "TOTAL", totalAmount.ToString("F2") },
-                    { "TOTAL_AMOUNT", totalAmount.ToString("F2") },
-                    { "SUBTOTAL", totalAmount.ToString("F2") },
+                    { "TOTAL", $"\u00a3{totalAmount:F2}" },
+                    { "TOTAL_AMOUNT", $"\u00a3{totalAmount:F2}" },
+                    { "SUBTOTAL", $"\u00a3{totalAmount:F2}" },
                     { "TAX", "0.00" }
                 };
 

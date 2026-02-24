@@ -53,6 +53,14 @@ namespace InvoiceGenerator.Services
                             try
                             {
                                 var dateStr = csv.GetField("Date") ?? "";
+
+                                // Skip empty rows or total/summary rows (no date = not a line item)
+                                if (string.IsNullOrWhiteSpace(dateStr))
+                                {
+                                    lineNumber++;
+                                    continue;
+                                }
+
                                 var day = csv.GetField("Day") ?? "";
                                 var duration = csv.GetField("Duration") ?? "";
                                 var carersStr = csv.GetField("No of Carers") ?? "1";
