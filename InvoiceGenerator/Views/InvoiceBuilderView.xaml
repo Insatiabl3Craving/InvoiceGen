@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
              d:DesignHeight="700" d:DesignWidth="900">
-    <StackPanel Margin="20" Background="White">
+    <StackPanel Margin="20" Background="{DynamicResource SurfaceBackground}">
         <TextBlock Text="Invoice Builder" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
 
         <Grid Margin="0,0,0,15">
@@ -49,9 +49,9 @@
         </Grid>
 
         <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
-            <Button Name="ImportCsvBtn" Content="Import CSV" Width="120" Padding="10" Click="ImportCsvBtn_Click" Background="#007ACC" Foreground="White"/>
+            <Button Name="ImportCsvBtn" Content="Import CSV" Width="120" Padding="10" Click="ImportCsvBtn_Click" Background="{DynamicResource PrimaryBlue}" Foreground="{DynamicResource PrimaryBlueForeground}"/>
             <Button Name="PreviewBtn" Content="Preview" Width="120" Padding="10" Margin="10,0" Click="PreviewBtn_Click"/>
-            <Button Name="GenerateBtn" Content="Generate Invoice" Width="150" Padding="10" Click="GenerateBtn_Click" Background="#107C10" Foreground="White"/>
+            <Button Name="GenerateBtn" Content="Generate Invoice" Width="150" Padding="10" Click="GenerateBtn_Click" Background="{DynamicResource SuccessGreen}" Foreground="{DynamicResource SuccessGreenForeground}"/>
         </StackPanel>
 
         <TextBlock Text="Preview:" FontSize="14" FontWeight="Bold" Margin="0,10,0,10"/>

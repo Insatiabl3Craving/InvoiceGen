@@ -136,20 +136,17 @@ namespace InvoiceGenerator.Views
             if (hasPassword && _smtpVerified)
             {
                 PasswordStatusText.Text = "\u2713 Email password verified.";
-                PasswordStatusText.Foreground = new System.Windows.Media.SolidColorBrush(
-                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#107C10"));
+                PasswordStatusText.Foreground = (System.Windows.Media.Brush)FindResource("SuccessGreen");
             }
             else if (hasPassword)
             {
                 PasswordStatusText.Text = "\u26a0 Email password entered \u2014 use 'Test Email Connection' to verify.";
-                PasswordStatusText.Foreground = new System.Windows.Media.SolidColorBrush(
-                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#CA5010"));
+                PasswordStatusText.Foreground = (System.Windows.Media.Brush)FindResource("WarningOrange");
             }
             else
             {
                 PasswordStatusText.Text = "No Email password";
-                PasswordStatusText.Foreground = new System.Windows.Media.SolidColorBrush(
-                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#666666"));
+                PasswordStatusText.Foreground = (System.Windows.Media.Brush)FindResource("TextMuted");
             }
         }
 

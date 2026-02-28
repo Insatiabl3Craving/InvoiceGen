@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
              d:DesignHeight="700" d:DesignWidth="900">
-    <Grid Background="White">
+    <Grid Background="{DynamicResource SurfaceBackground}">
         <StackPanel Margin="20">
             <TextBlock Text="Invoice History" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
 
@@ -30,7 +30,7 @@
                 <Button Name="OpenDocxBtn" Content="Open DOCX" Width="100" Padding="10" Click="OpenDocxBtn_Click" Margin="0,0,10,0"/>
                 <Button Name="OpenPdfBtn" Content="Open PDF" Width="100" Padding="10" Click="OpenPdfBtn_Click" Margin="0,0,10,0"/>
                 <Button Name="SendEmailBtn" Content="Send Email" Width="100" Padding="10" Click="SendEmailBtn_Click" Margin="0,0,10,0"/>
-                <Button Name="DeleteBtn" Content="Delete" Width="100" Padding="10" Click="DeleteBtn_Click" Background="#D13438" Foreground="White"/>
+                <Button Name="DeleteBtn" Content="Delete" Width="100" Padding="10" Click="DeleteBtn_Click" Background="{DynamicResource DangerRed}" Foreground="{DynamicResource DangerRedForeground}"/>
             </StackPanel>
         </StackPanel>
     </Grid>

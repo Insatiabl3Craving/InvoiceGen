@@ -5,12 +5,12 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="900">
-    <Grid Background="White">
+    <Grid Background="{DynamicResource SurfaceBackground}">
         <StackPanel Margin="20">
             <TextBlock Text="Client Manager" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
             
             <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-                <Button Name="AddClientBtn" Content="Add Client" Width="100" Padding="10" Click="AddClientBtn_Click" Background="#007ACC" Foreground="White"/>
+                <Button Name="AddClientBtn" Content="Add Client" Width="100" Padding="10" Click="AddClientBtn_Click" Background="{DynamicResource PrimaryBlue}" Foreground="{DynamicResource PrimaryBlueForeground}"/>
                 <Button Name="EditClientBtn" Content="Edit Client" Width="100" Padding="10" Margin="10,0" Click="EditClientBtn_Click"/>
                 <Button Name="DeleteClientBtn" Content="Delete Client" Width="100" Padding="10" Click="DeleteClientBtn_Click"/>
             </StackPanel>
