@@ -70,15 +70,14 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="Email Password:" VerticalAlignment="Center"/>
-                <PasswordBox Name="EmailPassword" Grid.Column="1" Height="38" Padding="10,6" Margin="10,0" VerticalContentAlignment="Center"/>
+                <PasswordBox Name="EmailPassword" Grid.Column="1" Height="38" Padding="10,6" Margin="10,0" VerticalContentAlignment="Center" PasswordChanged="EmailPassword_PasswordChanged"/>
             </Grid>
+
+            <TextBlock Name="PasswordStatusText" Margin="260,0,0,15" FontSize="12" Foreground="#666666" Text="No Email password"/>
 
             <CheckBox Name="UseTlsCheckBox" Content="Use TLS" Margin="0,0,0,15" IsChecked="True"/>
 
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
-                <Button Name="TestEmailBtn" Content="Test Email Connection" Width="200" Padding="10" Click="TestEmailBtn_Click" Margin="0,0,10,0"/>
-                <Button Name="VerifyPasswordBtn" Content="Verify Stored Password" Width="200" Padding="10" Click="VerifyPasswordBtn_Click"/>
-            </StackPanel>
+            <Button Name="TestEmailBtn" Content="Test Email Connection" Width="200" Padding="10" Click="TestEmailBtn_Click" Margin="0,0,0,15" HorizontalAlignment="Left"/>
 
             <!-- Email Template Settings -->
             <Separator Margin="0,20,0,20"/>

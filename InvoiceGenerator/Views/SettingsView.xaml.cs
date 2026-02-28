@@ -13,6 +13,7 @@ namespace InvoiceGenerator.Views
         private readonly SettingsService _settingsService = new();
         private readonly EmailService _emailService = new();
         private readonly AuthService _authService = new();
+        private bool _smtpVerified;
 
         public SettingsView()
         {
@@ -40,6 +41,8 @@ namespace InvoiceGenerator.Views
                 {
                     EmailPassword.Password = password;
                 }
+
+                UpdatePasswordStatus();
             }
             catch (Exception ex)
             {
@@ -108,38 +111,45 @@ namespace InvoiceGenerator.Views
                     EmailPassword.Password.Trim(),
                     UseTlsCheckBox.IsChecked ?? true);
 
+                _smtpVerified = true;
+                UpdatePasswordStatus();
                 MessageBox.Show("Email connection test successful!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
+                _smtpVerified = false;
+                UpdatePasswordStatus();
                 MessageBox.Show($"Email connection test failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void VerifyPasswordBtn_Click(object sender, RoutedEventArgs e)
+        private void EmailPassword_PasswordChanged(object sender, RoutedEventArgs e)
         {
-            try
+            _smtpVerified = false;
+            UpdatePasswordStatus();
+        }
+
+        private void UpdatePasswordStatus()
+        {
+            var hasPassword = !string.IsNullOrWhiteSpace(EmailPassword.Password);
+
+            if (hasPassword && _smtpVerified)
             {
-                var storedPassword = CredentialManager.GetPassword("InvoiceGeneratorEmail");
-                
-                if (string.IsNullOrEmpty(storedPassword))
-                {
-                    MessageBox.Show("No password found in Credential Manager.\n\nPlease enter your app-specific password and click 'Save Settings'.",
-                        "Password Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
-                else
-                {
-                    var hasWhitespace = storedPassword != storedPassword.Trim();
-                    var message = $"Password found in Credential Manager.\n\n" +
-                        $"Length: {storedPassword.Length} characters\n" +
-                        $"Has whitespace: {(hasWhitespace ? "YES - THIS IS THE PROBLEM!" : "No")}";
-                    MessageBox.Show(message,
-                        "Stored Password Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
+                PasswordStatusText.Text = "\u2713 Email password verified.";
+                PasswordStatusText.Foreground = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#107C10"));
             }
-            catch (Exception ex)
+            else if (hasPassword)
             {
-                MessageBox.Show($"Error checking stored password: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                PasswordStatusText.Text = "\u26a0 Email password entered \u2014 use 'Test Email Connection' to verify.";
+                PasswordStatusText.Foreground = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#CA5010"));
+            }
+            else
+            {
+                PasswordStatusText.Text = "No Email password";
+                PasswordStatusText.Foreground = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#666666"));
             }
         }
 
