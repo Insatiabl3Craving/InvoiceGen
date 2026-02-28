@@ -9,6 +9,23 @@
         <StackPanel Margin="20" Background="{DynamicResource SurfaceBackground}">
             <TextBlock Text="Settings" FontSize="24" FontWeight="Bold" Margin="0,0,0,30"/>
 
+            <!-- Appearance -->
+            <TextBlock Text="Appearance" FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
+            <Grid Margin="0,0,0,15">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="250"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Theme:" VerticalAlignment="Center"/>
+                <ComboBox Name="ThemeComboBox" Grid.Column="1" Width="160" HorizontalAlignment="Left"
+                          Margin="10,0" SelectionChanged="ThemeComboBox_SelectionChanged">
+                    <ComboBoxItem Content="Light"/>
+                    <ComboBoxItem Content="Dark"/>
+                </ComboBox>
+            </Grid>
+
+            <Separator Margin="0,20,0,20"/>
+
             <!-- File Settings -->
             <TextBlock Text="File Settings" FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
             <Grid Margin="0,0,0,15">

@@ -13,7 +13,9 @@ namespace InvoiceGenerator.Views
         private readonly SettingsService _settingsService = new();
         private readonly EmailService _emailService = new();
         private readonly AuthService _authService = new();
+        private readonly ThemeService _themeService = new();
         private bool _smtpVerified;
+        private bool _isLoadingSettings;
 
         public SettingsView()
         {
@@ -25,6 +27,7 @@ namespace InvoiceGenerator.Views
         {
             try
             {
+                _isLoadingSettings = true;
                 var settings = await _settingsService.GetSettingsAsync();
                 TemplatePath.Text = settings.TemplateFilePath;
                 InvoicesFolderPath.Text = settings.InvoicesFolderPath;
@@ -35,6 +38,9 @@ namespace InvoiceGenerator.Views
                 DefaultSubject.Text = settings.EmailDefaultSubject;
                 DefaultBody.Text = settings.EmailDefaultBody;
 
+                // Set theme combo to persisted value
+                ThemeComboBox.SelectedIndex = settings.Theme == "Dark" ? 1 : 0;
+
                 // Try to get email password from Credential Manager
                 var password = CredentialManager.GetPassword("InvoiceGeneratorEmail");
                 if (!string.IsNullOrEmpty(password))
@@ -43,9 +49,11 @@ namespace InvoiceGenerator.Views
                 }
 
                 UpdatePasswordStatus();
+                _isLoadingSettings = false;
             }
             catch (Exception ex)
             {
+                _isLoadingSettings = false;
                 MessageBox.Show($"Error loading settings: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -62,6 +70,14 @@ namespace InvoiceGenerator.Views
             {
                 TemplatePath.Text = openFileDialog.FileName;
             }
+        }
+
+        private void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isLoadingSettings) return;
+
+            var selectedTheme = ThemeComboBox.SelectedIndex == 1 ? "Dark" : "Light";
+            _themeService.ApplyTheme(selectedTheme);
         }
 
         private void BrowseFolderBtn_Click(object sender, RoutedEventArgs e)
@@ -175,6 +191,7 @@ namespace InvoiceGenerator.Views
                 settings.EmailUseTls = UseTlsCheckBox.IsChecked ?? true;
                 settings.EmailDefaultSubject = DefaultSubject.Text;
                 settings.EmailDefaultBody = DefaultBody.Text;
+                settings.Theme = ThemeComboBox.SelectedIndex == 1 ? "Dark" : "Light";
 
                 await _settingsService.UpdateSettingsAsync(settings);
 

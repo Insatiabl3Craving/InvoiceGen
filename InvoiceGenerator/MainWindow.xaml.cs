@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
 using InvoiceGenerator.Services;
+using InvoiceGenerator.Utilities;
 using InvoiceGenerator.ViewModels;
 using InvoiceGenerator.Views;
 
@@ -34,6 +35,8 @@ namespace InvoiceGenerator
                 logger);
 
             InitializeComponent();
+
+            DarkTitleBarHelper.Apply(this, IsDarkThemeActive());
 
             // Set DataContext for the lock overlay bindings
             LockOverlay.DataContext = _viewModel;
@@ -229,6 +232,15 @@ namespace InvoiceGenerator
             storyboard.Completed += OnCompleted;
             storyboard.Begin(this, true);
             await tcs.Task;
+        }
+
+        private static bool IsDarkThemeActive()
+        {
+            var dict = Application.Current?.Resources.MergedDictionaries.Count > 0
+                ? Application.Current.Resources.MergedDictionaries[0]
+                : null;
+
+            return dict?.Source?.OriginalString.Contains("DarkTheme.xaml", StringComparison.OrdinalIgnoreCase) == true;
         }
     }
 }

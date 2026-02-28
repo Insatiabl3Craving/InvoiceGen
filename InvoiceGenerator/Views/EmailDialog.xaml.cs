@@ -2,6 +2,7 @@ using System;
 using System.Windows;
 using InvoiceGenerator.Models;
 using InvoiceGenerator.Services;
+using InvoiceGenerator.Utilities;
 
 namespace InvoiceGenerator.Views
 {
@@ -15,6 +16,7 @@ namespace InvoiceGenerator.Views
         public EmailDialog(Invoice invoice)
         {
             InitializeComponent();
+            DarkTitleBarHelper.Apply(this, IsDarkThemeActive());
             _invoice = invoice;
             InitializeForm();
         }
@@ -131,6 +133,15 @@ namespace InvoiceGenerator.Views
         {
             DialogResult = false;
             Close();
+        }
+
+        private static bool IsDarkThemeActive()
+        {
+            var dict = Application.Current?.Resources.MergedDictionaries.Count > 0
+                ? Application.Current.Resources.MergedDictionaries[0]
+                : null;
+
+            return dict?.Source?.OriginalString.Contains("DarkTheme.xaml", StringComparison.OrdinalIgnoreCase) == true;
         }
     }
 }

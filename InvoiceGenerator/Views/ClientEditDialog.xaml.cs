@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows;
 using InvoiceGenerator.Models;
 using InvoiceGenerator.Services;
+using InvoiceGenerator.Utilities;
 
 namespace InvoiceGenerator.Views
 {
@@ -14,11 +15,13 @@ namespace InvoiceGenerator.Views
         public ClientEditDialog()
         {
             InitializeComponent();
+            DarkTitleBarHelper.Apply(this, IsDarkThemeActive());
         }
 
         public ClientEditDialog(Client client)
         {
             InitializeComponent();
+            DarkTitleBarHelper.Apply(this, IsDarkThemeActive());
             _currentClient = client;
             PopulateFields(client);
         }
@@ -129,6 +132,15 @@ namespace InvoiceGenerator.Views
         {
             return string.Join(", ", new[] { street?.Trim(), city?.Trim(), postcode?.Trim() }
                 .Where(value => !string.IsNullOrWhiteSpace(value)));
+        }
+
+        private static bool IsDarkThemeActive()
+        {
+            var dict = Application.Current?.Resources.MergedDictionaries.Count > 0
+                ? Application.Current.Resources.MergedDictionaries[0]
+                : null;
+
+            return dict?.Source?.OriginalString.Contains("DarkTheme.xaml", StringComparison.OrdinalIgnoreCase) == true;
         }
     }
 }

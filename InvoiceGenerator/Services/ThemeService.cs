@@ -1,5 +1,6 @@
 using System;
 using System.Windows;
+using InvoiceGenerator.Utilities;
 
 namespace InvoiceGenerator.Services
 {
@@ -52,6 +53,8 @@ namespace InvoiceGenerator.Services
             CurrentTheme = themeName.Equals("Dark", StringComparison.OrdinalIgnoreCase)
                 ? "Dark"
                 : "Light";
+
+            DarkTitleBarHelper.ApplyToAllOpenWindows(CurrentTheme == "Dark");
         }
 
         /// <summary>

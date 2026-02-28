@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Animation;
 using InvoiceGenerator.Services;
+using InvoiceGenerator.Utilities;
 using InvoiceGenerator.ViewModels;
 
 namespace InvoiceGenerator.Views
@@ -23,6 +24,7 @@ namespace InvoiceGenerator.Views
                 isLockScreenMode: isLockScreenMode);
 
             InitializeComponent();
+            DarkTitleBarHelper.Apply(this, IsDarkThemeActive());
             DataContext = _viewModel;
 
             // Subscribe to VM animation events
@@ -207,6 +209,15 @@ namespace InvoiceGenerator.Views
         private void CancelBtn_Click(object sender, RoutedEventArgs e)
         {
             _viewModel.Cancel();
+        }
+
+        private static bool IsDarkThemeActive()
+        {
+            var dict = Application.Current?.Resources.MergedDictionaries.Count > 0
+                ? Application.Current.Resources.MergedDictionaries[0]
+                : null;
+
+            return dict?.Source?.OriginalString.Contains("DarkTheme.xaml", StringComparison.OrdinalIgnoreCase) == true;
         }
     }
 }

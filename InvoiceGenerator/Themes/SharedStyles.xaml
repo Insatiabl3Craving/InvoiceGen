@@ -34,6 +34,12 @@
     <!-- IMPLICIT STYLES (apply automatically to every instance) -->
     <!-- ═══════════════════════════════════════════════════════ -->
 
+    <!-- ─── TextBlock (implicit) ─────────────────────────── -->
+
+    <Style TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+    </Style>
+
     <!-- ─── Button (implicit) ────────────────────────────── -->
 
     <Style TargetType="Button">
@@ -157,16 +163,297 @@
         <Setter Property="Background" Value="{DynamicResource InputBackground}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource InputBorder}"/>
         <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <Border x:Name="OuterBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                SnapsToDevicePixels="True">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="32"/>
+                                </Grid.ColumnDefinitions>
+
+                                <ContentPresenter x:Name="ContentSite"
+                                                  Grid.Column="0"
+                                                  Margin="12,0,4,0"
+                                                  VerticalAlignment="Center"
+                                                  HorizontalAlignment="Left"
+                                                  Content="{TemplateBinding SelectionBoxItem}"
+                                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                  ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                                  IsHitTestVisible="False"/>
+
+                                <TextBox x:Name="PART_EditableTextBox"
+                                         Grid.Column="0"
+                                         Margin="12,2,2,2"
+                                         Background="Transparent"
+                                         Foreground="{TemplateBinding Foreground}"
+                                         BorderThickness="0"
+                                         HorizontalContentAlignment="Left"
+                                         VerticalContentAlignment="Center"
+                                         Visibility="Hidden"
+                                         Focusable="True"/>
+
+                                <!-- Modern chevron icon -->
+                                <Path x:Name="ChevronPath"
+                                      Grid.Column="1"
+                                      Data="M4,6 L8,10 L12,6"
+                                      Stroke="{DynamicResource TextMuted}"
+                                      StrokeThickness="1.5"
+                                      StrokeLineJoin="Round"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      Fill="Transparent"
+                                      Width="16" Height="16"
+                                      Stretch="Uniform"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      IsHitTestVisible="False"
+                                      RenderTransformOrigin="0.5,0.5">
+                                    <Path.RenderTransform>
+                                        <RotateTransform Angle="0"/>
+                                    </Path.RenderTransform>
+                                </Path>
+                            </Grid>
+                        </Border>
+
+                        <!-- Transparent ToggleButton overlay – handles click-to-open -->
+                        <ToggleButton x:Name="DropDownToggle"
+                                      Grid.ColumnSpan="2"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                      ClickMode="Press"
+                                      Focusable="False"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      IsTabStop="False">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border Background="Transparent"/>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+
+                        <Popup x:Name="Popup"
+                               Placement="Bottom"
+                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                               AllowsTransparency="True"
+                               Focusable="False"
+                               PopupAnimation="Fade">
+                            <Border x:Name="DropDownShadow"
+                                    Margin="8"
+                                    CornerRadius="8"
+                                    SnapsToDevicePixels="True">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.22" Color="Black"/>
+                                </Border.Effect>
+                                <Border x:Name="DropDownBorder"
+                                        MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                        MaxHeight="260"
+                                        Background="{DynamicResource SurfaceBackground}"
+                                        BorderBrush="{DynamicResource InputBorder}"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Padding="4"
+                                        SnapsToDevicePixels="True">
+                                    <ScrollViewer Margin="0" SnapsToDevicePixels="True">
+                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Border>
+                        </Popup>
+                    </Grid>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="OuterBorder" Property="BorderBrush" Value="{DynamicResource TextMuted}"/>
+                            <Setter TargetName="ChevronPath" Property="Stroke" Value="{DynamicResource TextPrimary}"/>
+                        </Trigger>
+                        <Trigger Property="IsDropDownOpen" Value="True">
+                            <Setter TargetName="OuterBorder" Property="BorderBrush" Value="{DynamicResource InputFocusBorder}"/>
+                            <Setter TargetName="ChevronPath" Property="Stroke" Value="{DynamicResource InputFocusBorder}"/>
+                            <Setter TargetName="ChevronPath" Property="RenderTransform">
+                                <Setter.Value>
+                                    <RotateTransform Angle="180"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="OuterBorder" Property="BorderBrush" Value="{DynamicResource InputFocusBorder}"/>
+                        </Trigger>
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden"/>
+                            <Setter TargetName="DropDownToggle" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
+                        <Trigger Property="HasItems" Value="False">
+                            <Setter TargetName="DropDownBorder" Property="MinHeight" Value="42"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="OuterBorder" Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ComboBoxItem">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="10,8"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                    <Border x:Name="ItemBorder"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="5"
+                            Padding="{TemplateBinding Padding}"
+                            Margin="2,1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <!-- Accent bar for selected item -->
+                            <Border x:Name="AccentBar"
+                                    Grid.Column="0"
+                                    Width="3" Height="16"
+                                    CornerRadius="1.5"
+                                    Background="{DynamicResource PrimaryBlue}"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,8,0"
+                                    Visibility="Collapsed"/>
+                            <ContentPresenter Grid.Column="1"
+                                              VerticalAlignment="Center"
+                                              HorizontalAlignment="Left"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource NavButtonHoverBackground}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource NavButtonSelectedBackground}"/>
+                            <Setter TargetName="AccentBar" Property="Visibility" Value="Visible"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- ─── DatePicker (implicit) ────────────────────────── -->
 
     <Style TargetType="DatePicker">
+        <Setter Property="Height" Value="38"/>
+        <Setter Property="Padding" Value="10,6"/>
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="Foreground" Value="{DynamicResource InputForeground}"/>
         <Setter Property="Background" Value="{DynamicResource InputBackground}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource InputBorder}"/>
         <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DatePicker">
+                    <Grid>
+                        <Border x:Name="DatePickerBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                SnapsToDevicePixels="True">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="36"/>
+                                </Grid.ColumnDefinitions>
+
+                                <DatePickerTextBox x:Name="PART_TextBox"
+                                                   Grid.Column="0"
+                                                   Margin="8,2,2,2"
+                                                   Background="Transparent"
+                                                   Foreground="{TemplateBinding Foreground}"
+                                                   BorderThickness="0"
+                                                   VerticalContentAlignment="Center"/>
+
+                                <Button x:Name="PART_Button"
+                                        Grid.Column="1"
+                                        Focusable="False"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Foreground="{DynamicResource TextSecondary}"
+                                        Content="📅"
+                                        FontSize="12"/>
+                            </Grid>
+                        </Border>
+
+                        <Popup x:Name="PART_Popup"
+                               Placement="Bottom"
+                               AllowsTransparency="True"
+                               Focusable="False"
+                               IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                               PopupAnimation="Slide">
+                            <Border Background="{DynamicResource SurfaceBackground}"
+                                    BorderBrush="{DynamicResource InputBorder}"
+                                    BorderThickness="1"
+                                    CornerRadius="4">
+                                <Calendar x:Name="PART_Calendar"
+                                          Background="{DynamicResource SurfaceBackground}"
+                                          Foreground="{DynamicResource TextPrimary}"
+                                          BorderThickness="0"/>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="DatePickerBorder" Property="BorderBrush" Value="{DynamicResource InputFocusBorder}"/>
+                            <Setter TargetName="DatePickerBorder" Property="BorderThickness" Value="2"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="DatePickerBorder" Property="Opacity" Value="0.6"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="DatePickerTextBox">
+        <Setter Property="Foreground" Value="{DynamicResource InputForeground}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+
+    <Style TargetType="Calendar">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+    </Style>
+
+    <Style TargetType="CalendarDayButton">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource NavButtonHoverBackground}"/>
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{DynamicResource PrimaryBlue}"/>
+                <Setter Property="Foreground" Value="{DynamicResource PrimaryBlueForeground}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style TargetType="CalendarButton">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="Background" Value="Transparent"/>
     </Style>
 
     <!-- ─── Separator (implicit) ─────────────────────────── -->
