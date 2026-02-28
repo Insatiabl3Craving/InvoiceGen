@@ -39,6 +39,10 @@ namespace InvoiceGenerator
                 var settingsService = new SettingsService();
                 settingsService.InitializeDatabaseAsync().GetAwaiter().GetResult();
 
+                // Apply persisted theme before any window is shown
+                var themeService = new ThemeService(settingsService);
+                themeService.ApplyStoredThemeAsync().GetAwaiter().GetResult();
+
                 var passwordDialog = new AppPasswordDialog(authCoordinator: _authCoordinator, logger: _securityLogger);
                 var result = passwordDialog.ShowDialog();
                 if (result != true)

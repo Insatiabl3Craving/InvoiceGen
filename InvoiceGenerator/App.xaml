@@ -3,6 +3,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:InvoiceGenerator">
     <Application.Resources>
-         
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Index 0: Active theme (swapped at runtime by ThemeService) -->
+                <ResourceDictionary Source="Themes/LightTheme.xaml"/>
+                <!-- Index 1: Shared control styles -->
+                <ResourceDictionary Source="Themes/SharedStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

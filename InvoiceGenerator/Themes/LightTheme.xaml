@@ -1,0 +1,58 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- Light Theme – Brush Resources                          -->
+    <!-- Every key here MUST also exist in DarkTheme.xaml        -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+
+    <!-- Backgrounds -->
+    <SolidColorBrush x:Key="AppBackground"          Color="#FAFAFA"/>
+    <SolidColorBrush x:Key="SurfaceBackground"      Color="White"/>
+    <SolidColorBrush x:Key="SidebarBackground"      Color="#F0F0F0"/>
+    <SolidColorBrush x:Key="HeaderBackground"        Color="White"/>
+    <SolidColorBrush x:Key="HeaderBorderBrush"       Color="#E5E5E5"/>
+    <SolidColorBrush x:Key="OverlayBackground"       Color="#FAFAFA"/>
+
+    <!-- Text -->
+    <SolidColorBrush x:Key="TextPrimary"            Color="#1A1A1A"/>
+    <SolidColorBrush x:Key="TextSecondary"          Color="#444444"/>
+    <SolidColorBrush x:Key="TextMuted"              Color="#666666"/>
+    <SolidColorBrush x:Key="TextPlaceholder"        Color="#8A8A8A"/>
+
+    <!-- Accent / Brand -->
+    <SolidColorBrush x:Key="PrimaryBlue"            Color="#007ACC"/>
+    <SolidColorBrush x:Key="PrimaryBlueForeground"  Color="White"/>
+
+    <!-- Semantic -->
+    <SolidColorBrush x:Key="SuccessGreen"           Color="#107C10"/>
+    <SolidColorBrush x:Key="SuccessGreenForeground" Color="White"/>
+    <SolidColorBrush x:Key="WarningOrange"          Color="#CA5010"/>
+    <SolidColorBrush x:Key="ErrorRed"               Color="#A4262C"/>
+    <SolidColorBrush x:Key="DangerRed"              Color="#D13438"/>
+    <SolidColorBrush x:Key="DangerRedForeground"    Color="White"/>
+
+    <!-- Inputs -->
+    <SolidColorBrush x:Key="InputBackground"        Color="White"/>
+    <SolidColorBrush x:Key="InputForeground"        Color="#1A1A1A"/>
+    <SolidColorBrush x:Key="InputBorder"            Color="#D3D3D3"/>
+    <SolidColorBrush x:Key="InputFocusBorder"       Color="#007ACC"/>
+
+    <!-- Buttons -->
+    <SolidColorBrush x:Key="ButtonDefaultBackground"   Color="#E0E0E0"/>
+    <SolidColorBrush x:Key="ButtonDefaultForeground"   Color="#1A1A1A"/>
+    <SolidColorBrush x:Key="IconButtonForeground"      Color="#666666"/>
+    <SolidColorBrush x:Key="IconButtonHoverForeground" Color="#007ACC"/>
+
+    <!-- DataGrid -->
+    <SolidColorBrush x:Key="DataGridHeaderBackground"   Color="#F0F0F0"/>
+    <SolidColorBrush x:Key="DataGridHeaderForeground"   Color="#1A1A1A"/>
+    <SolidColorBrush x:Key="DataGridRowAltBackground"   Color="#F9F9F9"/>
+    <SolidColorBrush x:Key="DataGridGridLines"          Color="#E5E5E5"/>
+    <SolidColorBrush x:Key="DataGridSelectionBackground" Color="#CCE4F7"/>
+    <SolidColorBrush x:Key="DataGridSelectionForeground" Color="#1A1A1A"/>
+
+    <!-- Separator -->
+    <SolidColorBrush x:Key="SeparatorBrush"         Color="#E5E5E5"/>
+
+</ResourceDictionary>

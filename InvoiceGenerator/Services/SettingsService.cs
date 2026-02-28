@@ -99,6 +99,11 @@ namespace InvoiceGenerator.Services
                     alterStatements.Add("ALTER TABLE AppSettings ADD COLUMN AppPasswordLockoutUntilUtc TEXT NULL;");
                 }
 
+                if (!existingColumns.Contains("Theme"))
+                {
+                    alterStatements.Add("ALTER TABLE AppSettings ADD COLUMN Theme TEXT NOT NULL DEFAULT 'Light';");
+                }
+
                 foreach (var sql in alterStatements)
                 {
                     using var alterCommand = connection.CreateCommand();
