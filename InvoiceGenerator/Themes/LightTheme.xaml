@@ -52,6 +52,10 @@
     <SolidColorBrush x:Key="DataGridSelectionBackground" Color="#CCE4F7"/>
     <SolidColorBrush x:Key="DataGridSelectionForeground" Color="#1A1A1A"/>
 
+    <!-- Navigation -->
+    <SolidColorBrush x:Key="NavButtonHoverBackground"    Color="#E5E5E5"/>
+    <SolidColorBrush x:Key="NavButtonSelectedBackground" Color="#DCE8F4"/>
+
     <!-- Separator -->
     <SolidColorBrush x:Key="SeparatorBrush"         Color="#E5E5E5"/>
 

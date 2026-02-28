@@ -7,7 +7,7 @@
         xmlns:converters="clr-namespace:InvoiceGenerator.Converters"
         mc:Ignorable="d"
         Title="Invoice Generator" Height="800" Width="1200" WindowStartupLocation="CenterScreen"
-        Background="#FAFAFA">
+        Background="{DynamicResource AppBackground}">
 
     <Window.Resources>
         <!-- Shake animation for incorrect password -->
@@ -47,13 +47,18 @@
     <Grid>
         <!-- Layer 0: Main application content -->
         <StackPanel x:Name="MainContent" Orientation="Horizontal">
-            <Border Width="200" Background="#F0F0F0" Padding="10">
+            <Border Width="200" Background="{DynamicResource SidebarBackground}" Padding="0,10">
                 <StackPanel>
-                    <TextBlock Text="Navigation" FontSize="16" FontWeight="Bold" Margin="0,0,0,20"/>
-                    <Button Name="ClientManagerBtn" Content="Client Manager" Padding="10" Margin="0,5" Click="ClientManagerBtn_Click"/>
-                    <Button Name="InvoiceBuilderBtn" Content="Invoice Builder" Padding="10" Margin="0,5" Click="InvoiceBuilderBtn_Click"/>
-                    <Button Name="HistoryBtn" Content="Invoice History" Padding="10" Margin="0,5" Click="HistoryBtn_Click"/>
-                    <Button Name="SettingsBtn" Content="Settings" Padding="10" Margin="0,5" Click="SettingsBtn_Click"/>
+                    <TextBlock Text="Navigation" FontSize="16" FontWeight="Bold" Margin="16,0,0,16"
+                               Foreground="{DynamicResource TextPrimary}"/>
+                    <Button Name="ClientManagerBtn" Content="Client Manager"
+                            Style="{DynamicResource NavButtonStyle}" Click="ClientManagerBtn_Click"/>
+                    <Button Name="InvoiceBuilderBtn" Content="Invoice Builder"
+                            Style="{DynamicResource NavButtonStyle}" Click="InvoiceBuilderBtn_Click"/>
+                    <Button Name="HistoryBtn" Content="Invoice History"
+                            Style="{DynamicResource NavButtonStyle}" Click="HistoryBtn_Click"/>
+                    <Button Name="SettingsBtn" Content="Settings"
+                            Style="{DynamicResource NavButtonStyle}" Click="SettingsBtn_Click"/>
                 </StackPanel>
             </Border>
             <ContentControl Name="ContentArea" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10"/>
@@ -62,7 +67,7 @@
         <!-- Layer 1: Lock overlay (rendered on top, collapsed when unlocked) -->
         <Grid x:Name="LockOverlay"
               Visibility="{Binding IsLocked, Converter={StaticResource BoolToVisibility}}"
-              Background="#FAFAFA"
+              Background="{DynamicResource OverlayBackground}"
               KeyboardNavigation.TabNavigation="Cycle"
               FocusManager.IsFocusScope="True">
 
@@ -75,7 +80,7 @@
             <StackPanel Grid.Row="1" MaxWidth="360" MinWidth="300" HorizontalAlignment="Center">
                 <!-- Lock icon and title -->
                 <TextBlock Text="🔒" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                <TextBlock Text="Session Locked" FontSize="18" FontWeight="SemiBold" Foreground="#1A1A1A"
+                <TextBlock Text="Session Locked" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"
                            HorizontalAlignment="Center" Margin="0,0,0,24"/>
 
                 <!-- Password input row -->
@@ -106,7 +111,7 @@
 
                     <TextBlock x:Name="LockPasswordPlaceholder" Grid.Column="0"
                                Margin="14,0,0,0" VerticalAlignment="Center"
-                               Foreground="#8A8A8A" FontSize="14"
+                               Foreground="{DynamicResource TextPlaceholder}" FontSize="14"
                                IsHitTestVisible="False" Text="Enter your password"/>
 
                     <Button x:Name="LockToggleVisibility" Grid.Column="1"
@@ -131,11 +136,11 @@
                 <TextBlock x:Name="LockVerifyErrorText"
                            Text="{Binding ErrorMessage}"
                            Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}"
-                           Foreground="#A4262C" FontSize="12"
+                           Foreground="{DynamicResource ErrorRed}" FontSize="12"
                            Margin="0,-10,0,12" TextWrapping="Wrap"/>
 
                 <!-- Hint -->
-                <TextBlock Foreground="#666" FontSize="12" Margin="0,0,0,24"
+                <TextBlock Foreground="{DynamicResource TextMuted}" FontSize="12" Margin="0,0,0,24"
                            Text="Session locked after inactivity. Enter your password to continue."
                            HorizontalAlignment="Center" TextAlignment="Center"/>
             </StackPanel>

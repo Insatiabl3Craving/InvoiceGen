@@ -352,6 +352,56 @@
     <!-- Alias used by MainWindow lock overlay -->
     <Style x:Key="LockEyeButtonStyle" TargetType="Button" BasedOn="{StaticResource EyeButtonStyle}"/>
 
+    <!-- ─── Sidebar Nav Button (named) ─────────────────── -->
+
+    <Style x:Key="NavButtonStyle" TargetType="Button">
+        <Setter Property="Height" Value="40"/>
+        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Margin" Value="0,2"/>
+        <Setter Property="Tag" Value=""/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <!-- Left accent bar (visible when selected) -->
+                        <Border x:Name="AccentBar" Width="3" HorizontalAlignment="Left"
+                                Background="{DynamicResource PrimaryBlue}"
+                                Visibility="Collapsed" CornerRadius="0,2,2,0"/>
+
+                        <!-- Content area -->
+                        <Border x:Name="ContentBorder" Padding="{TemplateBinding Padding}"
+                                Background="Transparent" CornerRadius="6" Margin="6,0,6,0">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ContentBorder" Property="Background"
+                                    Value="{DynamicResource NavButtonHoverBackground}"/>
+                        </Trigger>
+                        <Trigger Property="Tag" Value="Selected">
+                            <Setter TargetName="AccentBar" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="ContentBorder" Property="Background"
+                                    Value="{DynamicResource NavButtonSelectedBackground}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Opacity" Value="0.8"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ─── Modern Button (named – for auth screens) ───── -->
 
     <Style x:Key="ModernButtonStyle" TargetType="Button">

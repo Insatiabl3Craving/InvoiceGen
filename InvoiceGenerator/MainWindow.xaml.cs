@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
 using InvoiceGenerator.Services;
@@ -44,23 +45,38 @@ namespace InvoiceGenerator
 
         // ── Navigation (stays as code-behind) ────────────────────────
 
+        private Button? _selectedNavButton;
+
+        private void SetNavSelection(Button button)
+        {
+            if (_selectedNavButton != null)
+                _selectedNavButton.Tag = "";
+
+            button.Tag = "Selected";
+            _selectedNavButton = button;
+        }
+
         private void ClientManagerBtn_Click(object sender, RoutedEventArgs e)
         {
+            SetNavSelection(ClientManagerBtn);
             ContentArea.Content = new ClientManagerView();
         }
 
         private void InvoiceBuilderBtn_Click(object sender, RoutedEventArgs e)
         {
+            SetNavSelection(InvoiceBuilderBtn);
             ContentArea.Content = new InvoiceBuilderView();
         }
 
         private void HistoryBtn_Click(object sender, RoutedEventArgs e)
         {
+            SetNavSelection(HistoryBtn);
             ContentArea.Content = new InvoiceHistoryView();
         }
 
         private void SettingsBtn_Click(object sender, RoutedEventArgs e)
         {
+            SetNavSelection(SettingsBtn);
             ContentArea.Content = new SettingsView();
         }
 
