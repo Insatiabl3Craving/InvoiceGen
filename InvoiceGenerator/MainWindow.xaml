@@ -40,103 +40,8 @@
             </DoubleAnimation>
         </Storyboard>
 
-        <!-- Password box style -->
-        <Style x:Key="LockPasswordBoxStyle" TargetType="PasswordBox">
-            <Setter Property="Height" Value="42"/>
-            <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="#1A1A1A"/>
-            <Setter Property="BorderBrush" Value="#D3D3D3"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="PasswordBox">
-                        <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Background="{TemplateBinding Background}"
-                                SnapsToDevicePixels="True" CornerRadius="4">
-                            <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
-                                          HorizontalScrollBarVisibility="Hidden"
-                                          VerticalScrollBarVisibility="Hidden"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter Property="BorderBrush" TargetName="border" Value="#007ACC"/>
-                                <Setter Property="BorderThickness" TargetName="border" Value="2"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Text box style (for reveal mode) -->
-        <Style x:Key="LockTextBoxStyle" TargetType="TextBox">
-            <Setter Property="Height" Value="42"/>
-            <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="#1A1A1A"/>
-            <Setter Property="BorderBrush" Value="#D3D3D3"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Background="{TemplateBinding Background}"
-                                SnapsToDevicePixels="True" CornerRadius="4">
-                            <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
-                                          HorizontalScrollBarVisibility="Hidden"
-                                          VerticalScrollBarVisibility="Hidden"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter Property="BorderBrush" TargetName="border" Value="#007ACC"/>
-                                <Setter Property="BorderThickness" TargetName="border" Value="2"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
         <!-- Converters -->
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
-
-        <!-- Eye / submit button style -->
-        <Style x:Key="LockEyeButtonStyle" TargetType="Button">
-            <Setter Property="Width" Value="42"/>
-            <Setter Property="Height" Value="42"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="#666"/>
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Foreground" Value="#007ACC"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Foreground" Value="#007ACC"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
     </Window.Resources>
 
     <Grid>
@@ -185,14 +90,14 @@
                     </Grid.ColumnDefinitions>
 
                     <PasswordBox x:Name="LockPasswordBox" Grid.Column="0"
-                                 Style="{StaticResource LockPasswordBoxStyle}"
+                                 Style="{DynamicResource LockPasswordBoxStyle}"
                                  PasswordChanged="LockPasswordInput_Changed"
                                  GotFocus="LockPasswordInput_FocusChanged"
                                  LostFocus="LockPasswordInput_FocusChanged"
                                  TabIndex="0"/>
 
                     <TextBox x:Name="LockPasswordTextBox" Grid.Column="0"
-                             Style="{StaticResource LockTextBoxStyle}"
+                             Style="{DynamicResource LockTextBoxStyle}"
                              Visibility="Collapsed"
                              TextChanged="LockPasswordInput_Changed"
                              GotFocus="LockPasswordInput_FocusChanged"
@@ -205,7 +110,7 @@
                                IsHitTestVisible="False" Text="Enter your password"/>
 
                     <Button x:Name="LockToggleVisibility" Grid.Column="1"
-                            Style="{StaticResource LockEyeButtonStyle}" Content="👁"
+                            Style="{DynamicResource LockEyeButtonStyle}" Content="👁"
                             PreviewMouseLeftButtonDown="LockRevealPassword_Down"
                             PreviewMouseLeftButtonUp="LockRevealPassword_Up"
                             MouseLeave="LockRevealPassword_Leave"
@@ -216,7 +121,7 @@
                             ToolTip="Press and hold to reveal password"/>
 
                     <Button x:Name="LockSubmitBtn" Grid.Column="2"
-                            Style="{StaticResource LockEyeButtonStyle}" Content="➜"
+                            Style="{DynamicResource LockEyeButtonStyle}" Content="➜"
                             Click="LockSubmitBtn_Click"
                             TabIndex="1"
                             ToolTip="Unlock"/>

@@ -29,6 +29,220 @@
         <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
     </Style>
 
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- IMPLICIT STYLES (apply automatically to every instance) -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+
+    <!-- ─── Button (implicit) ────────────────────────────── -->
+
+    <Style TargetType="Button">
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Background" Value="{DynamicResource ButtonDefaultBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ButtonDefaultForeground}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6"
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Opacity" Value="0.85"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Opacity" Value="0.7"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ─── TextBox (implicit) ───────────────────────────── -->
+
+    <Style TargetType="TextBox">
+        <Setter Property="Height" Value="38"/>
+        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Background" Value="{DynamicResource InputBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource InputForeground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource InputBorder}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="border"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Background="{TemplateBinding Background}"
+                            SnapsToDevicePixels="True" CornerRadius="4">
+                        <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
+                                      HorizontalScrollBarVisibility="Hidden"
+                                      VerticalScrollBarVisibility="Hidden"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource InputFocusBorder}"/>
+                            <Setter Property="BorderThickness" TargetName="border" Value="2"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ─── PasswordBox (implicit) ───────────────────────── -->
+
+    <Style TargetType="PasswordBox">
+        <Setter Property="Height" Value="38"/>
+        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Background" Value="{DynamicResource InputBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource InputForeground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource InputBorder}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="PasswordBox">
+                    <Border x:Name="border"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Background="{TemplateBinding Background}"
+                            SnapsToDevicePixels="True" CornerRadius="4">
+                        <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
+                                      HorizontalScrollBarVisibility="Hidden"
+                                      VerticalScrollBarVisibility="Hidden"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource InputFocusBorder}"/>
+                            <Setter Property="BorderThickness" TargetName="border" Value="2"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ─── CheckBox (implicit) ──────────────────────────── -->
+
+    <Style TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+
+    <!-- ─── ComboBox (implicit) ──────────────────────────── -->
+
+    <Style TargetType="ComboBox">
+        <Setter Property="Height" Value="38"/>
+        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{DynamicResource InputForeground}"/>
+        <Setter Property="Background" Value="{DynamicResource InputBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource InputBorder}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+
+    <!-- ─── DatePicker (implicit) ────────────────────────── -->
+
+    <Style TargetType="DatePicker">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{DynamicResource InputForeground}"/>
+        <Setter Property="Background" Value="{DynamicResource InputBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource InputBorder}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+
+    <!-- ─── Separator (implicit) ─────────────────────────── -->
+
+    <Style TargetType="Separator">
+        <Setter Property="Background" Value="{DynamicResource SeparatorBrush}"/>
+        <Setter Property="Margin" Value="0,20,0,20"/>
+    </Style>
+
+    <!-- ─── DataGrid (implicit) ──────────────────────────── -->
+
+    <Style TargetType="DataGrid">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource InputBorder}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="RowBackground" Value="{DynamicResource SurfaceBackground}"/>
+        <Setter Property="AlternatingRowBackground" Value="{DynamicResource DataGridRowAltBackground}"/>
+        <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+        <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource DataGridGridLines}"/>
+        <Setter Property="HeadersVisibility" Value="Column"/>
+        <Setter Property="AutoGenerateColumns" Value="False"/>
+        <Setter Property="IsReadOnly" Value="True"/>
+        <Setter Property="SelectionMode" Value="Single"/>
+        <Setter Property="CanUserAddRows" Value="False"/>
+        <Setter Property="CanUserDeleteRows" Value="False"/>
+    </Style>
+
+    <Style TargetType="DataGridColumnHeader">
+        <Setter Property="Background" Value="{DynamicResource DataGridHeaderBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource DataGridHeaderForeground}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource DataGridGridLines}"/>
+        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+    </Style>
+
+    <Style TargetType="DataGridCell">
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Style.Triggers>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{DynamicResource DataGridSelectionBackground}"/>
+                <Setter Property="Foreground" Value="{DynamicResource DataGridSelectionForeground}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style TargetType="DataGridRow">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBackground}"/>
+        <Style.Triggers>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{DynamicResource DataGridSelectionBackground}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ─── ScrollBar (implicit – slim modern) ───────────── -->
+
+    <Style TargetType="ScrollBar">
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Vertical">
+                <Setter Property="Width" Value="8"/>
+            </Trigger>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Height" Value="8"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- NAMED STYLES (consolidated from MainWindow + Dialog)   -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+
     <!-- ─── Modern TextBox (named – for auth screens) ──── -->
 
     <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
@@ -62,6 +276,9 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <!-- Alias used by MainWindow lock overlay -->
+    <Style x:Key="LockTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource ModernTextBoxStyle}"/>
 
     <!-- ─── Modern PasswordBox (named – for auth screens) ── -->
 
@@ -97,6 +314,9 @@
         </Setter>
     </Style>
 
+    <!-- Alias used by MainWindow lock overlay -->
+    <Style x:Key="LockPasswordBoxStyle" TargetType="PasswordBox" BasedOn="{StaticResource ModernPasswordBoxStyle}"/>
+
     <!-- ─── Eye / Icon Button (named) ──────────────────── -->
 
     <Style x:Key="EyeButtonStyle" TargetType="Button">
@@ -128,6 +348,9 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <!-- Alias used by MainWindow lock overlay -->
+    <Style x:Key="LockEyeButtonStyle" TargetType="Button" BasedOn="{StaticResource EyeButtonStyle}"/>
 
     <!-- ─── Modern Button (named – for auth screens) ───── -->
 
